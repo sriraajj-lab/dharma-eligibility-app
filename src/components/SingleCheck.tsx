@@ -6,6 +6,7 @@ import {
   Clock, Printer
 } from 'lucide-react';
 import { supabase, callAvailityApi } from '../lib/supabase';
+import { InsurancePicker } from './InsurancePicker';
 
 /* ─── Types ─────────────────────────────────────────── */
 interface PatientForm {
@@ -181,7 +182,6 @@ export function SingleCheck() {
   const [step, setStep]         = useState<1|2|3>(1);
   const [patient, setPatient]   = useState<PatientForm>(BLANK_PATIENT);
   const [insurance, setInsurance] = useState<InsuranceForm>(BLANK_INS);
-  const [companies, setCompanies] = useState<{id:string;name:string;availity_carrier_id:string}[]>([]);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const [result, setResult]     = useState<EligResult|null>(null);
@@ -317,49 +317,27 @@ export function SingleCheck() {
           <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2">
             <Building2 className="w-5 h-5 text-blue-600"/> Insurance Information
           </h3>
-          <p className="text-sm text-gray-500 mb-5">Select from your saved carriers or enter the Availity carrier code directly.</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Select the patient's insurance below. Every insurer shows its <strong>Payer ID</strong> — click
+            the&nbsp;<span className="inline-flex items-center gap-0.5 text-gray-600 font-medium">✏️ pencil</span>&nbsp;icon on any row to change the Payer ID if needed.
+          </p>
 
-          {/* Select from saved companies */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Insurance Company</label>
-            <select
-              value={companies.find(c => c.availity_carrier_id === insurance.carrier_id)?.id ?? ''}
-              onChange={e => {
-                const co = companies.find(c => c.id === e.target.value);
-                if (co) iSet('carrier_id', co.availity_carrier_id), iSet('carrier_name', co.name);
-                else    iSet('carrier_id', ''), iSet('carrier_name', '');
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-              <option value="">— Select a carrier —</option>
-              {companies.map(c => (
-                <option key={c.id} value={c.id}>{c.name} ({c.availity_carrier_id})</option>
-              ))}
-            </select>
+          {/* Rich carrier picker */}
+          <div className="mb-5">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Insurance Company &amp; Payer ID *</label>
+            <InsurancePicker
+              selectedId={insurance.carrier_id}
+              selectedName={insurance.carrier_name}
+              onChange={(payer_id, name) => { iSet('carrier_id', payer_id); iSet('carrier_name', name); }}
+            />
           </div>
 
-          <div className="flex items-center gap-3 my-3">
-            <div className="flex-1 h-px bg-gray-200"/><span className="text-xs text-gray-400">or enter manually</span><div className="flex-1 h-px bg-gray-200"/>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Carrier Name *</label>
-              <input value={insurance.carrier_name} onChange={e => iSet('carrier_name', e.target.value)}
-                placeholder="e.g., Aetna"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Availity Carrier ID *</label>
-              <input value={insurance.carrier_id} onChange={e => iSet('carrier_id', e.target.value.toUpperCase())}
-                placeholder="e.g., AETNA"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Plan Name <span className="text-gray-400">(optional)</span></label>
-              <input value={insurance.plan_name} onChange={e => iSet('plan_name', e.target.value)}
-                placeholder="e.g., Delta Dental PPO Plus Premier"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
-            </div>
+          {/* Plan name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Plan Name <span className="text-gray-400">(optional)</span></label>
+            <input value={insurance.plan_name} onChange={e => iSet('plan_name', e.target.value)}
+              placeholder="e.g., Delta Dental PPO Plus Premier"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
           </div>
 
           {/* Patient summary */}
