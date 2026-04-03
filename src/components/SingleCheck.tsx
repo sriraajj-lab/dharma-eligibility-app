@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase, callAvailityApi } from '../lib/supabase';
 import { InsurancePicker } from './InsurancePicker';
+import { DemoBanner } from './DemoBanner';
 
 /* ─── Types ─────────────────────────────────────────── */
 interface PatientForm {
