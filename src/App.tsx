@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { ShieldCheck, Upload, Building2, Activity } from 'lucide-react';
+import { ShieldCheck, Upload, Building2, Activity, FilePlus2 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { AuthModal } from './components/AuthModal';
 import { Header } from './components/Header';
 import { SingleCheck } from './components/SingleCheck';
 import { BatchCheck } from './components/BatchCheck';
 import { Companies } from './components/Companies';
+import { Preauth } from './components/Preauth';
 
 const TABS = [
   { id: 'single', label: 'Check Eligibility', icon: ShieldCheck, desc: 'Single patient — enter info, check, download' },
   { id: 'batch',  label: 'Batch Upload',      icon: Upload,      desc: 'Upload CSV for multiple patients at once' },
+  { id: 'preauth',   label: 'Preauthorization', icon: FilePlus2, desc: 'Submit & track prior authorization requests' },
   { id: 'companies', label: 'Manage Carriers', icon: Building2,  desc: 'Insurance companies & Availity carrier IDs' },
 ] as const;
 
@@ -62,6 +64,7 @@ export default function App() {
 
           {activeTab === 'single'    && <SingleCheck />}
           {activeTab === 'batch'     && <BatchCheck />}
+          {activeTab === 'preauth'   && <Preauth />}
           {activeTab === 'companies' && <Companies />}
         </div>
       )}
