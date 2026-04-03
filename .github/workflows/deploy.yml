@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages + Supabase Functions
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -12,32 +12,9 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  # ── Deploy Supabase Edge Function ─────────────────────────────
-  deploy-edge-function:
-    runs-on: ubuntu-latest
-    # Skip gracefully if SUPABASE_ACCESS_TOKEN secret not set
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Deploy availity-integration function
-        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          supabase functions deploy availity-integration \
-            --project-ref slkcjzqlupdoocxficug \
-            --no-verify-jwt
-
-  # ── Build & Deploy GitHub Pages ───────────────────────────────
   build:
     runs-on: ubuntu-latest
     steps:
