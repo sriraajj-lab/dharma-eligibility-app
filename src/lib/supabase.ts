@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl     = 'https://slkcjzqlupdoocxficug.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsa2NqenFsdXBkb29jeGZpY3VnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDkyNzksImV4cCI6MjA5MDYyNTI3OX0.Yrklj2y3hxQNsM7d8kKs2Anh_Onhx623C8-BfIvxU50';
+const supabaseUrl     = 'https://rjamdphhhssqxoonserx.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqYW1kcGhoaHNzcXhvb25zZXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNDgxMDcsImV4cCI6MjA5MDgyNDEwN30.Rg-fstkxZTueggYXYyWROz2Y2WpXRsZ4cUKe1Y5wYFc';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -45,34 +45,25 @@ function mockPreauth(p: Record<string, string>) {
 
 /* ─── API caller ────────────────────────────────────────────────── */
 export const callAvailityApi = async (action: string, payload: Record<string, unknown>) => {
-  // Get user session — but use ANON KEY for the Edge Function authorization
-  // (the function validates JWTs but accepts the anon key)
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('You must be signed in. Please sign out and sign back in.');
-
   let response: Response;
   try {
     response = await fetch(`${supabaseUrl}/functions/v1/availity-integration`, {
       method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,   // anon key — accepted by function
-        'x-user-id':     session.user.id,               // pass user context separately
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
       },
       body: JSON.stringify({ action, ...payload }),
     });
   } catch {
-    // Network error — return mock data so the app still works
     console.warn('[Dharma] Network error calling Edge Function — using demo data');
     return fallbackMock(action, payload as Record<string,string>);
   }
 
   const json = await response.json() as Record<string, unknown>;
 
-  // If the function is misconfigured / Availity not set up → use mock
   if (!response.ok || json?.error) {
     const errMsg = String(json?.error ?? '');
-    // Known non-fatal errors → fall back to demo mode
     if (
       errMsg.includes('Invalid action') ||
       errMsg.includes('not configured') ||
@@ -83,7 +74,6 @@ export const callAvailityApi = async (action: string, payload: Record<string, un
       console.warn('[Dharma] Availity not configured — using demo data:', errMsg);
       return fallbackMock(action, payload as Record<string,string>);
     }
-    // Hard errors (auth, bad request, etc.)
     throw new Error(errMsg || `Request failed (${response.status})`);
   }
 
@@ -91,8 +81,8 @@ export const callAvailityApi = async (action: string, payload: Record<string, un
 };
 
 function fallbackMock(action: string, p: Record<string, string>): Record<string, unknown> {
-  if (action === 'check_eligibility')    return mockEligibility(p);
+  if (action === 'check_eligibility')       return mockEligibility(p);
   if (action === 'submit_preauthorization') return mockPreauth(p);
-  if (action === 'check_auth_status')    return { status: 'pending', message: 'Status check pending' };
+  if (action === 'check_auth_status')       return { status: 'pending', message: 'Status check pending' };
   return { _demo: true };
 }
