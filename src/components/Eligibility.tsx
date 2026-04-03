@@ -1,192 +1,233 @@
-import React, { useState, useEffect } from 'react';
-import { ShieldCheck, AlertCircle, Loader2, CheckCircle, XCircle, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShieldCheck, Loader2, AlertCircle, CheckCircle, User, DollarSign, Percent, Calendar, Award, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase, callAvailityApi } from '../lib/supabase';
-import { Patient } from '../types';
-
-interface EligibilityData {
-  coverageActive?: boolean;
-  deductible?: number;
-  deductibleMet?: number;
-  outOfPocketMax?: number;
-  outOfPocketMet?: number;
-  preventiveCoverage?: number;
-  basicCoverage?: number;
-  majorCoverage?: number;
-  inNetwork?: boolean;
-  effectiveDate?: string;
-  terminationDate?: string;
-  planName?: string;
-  groupNumber?: string;
-  subscriberName?: string;
-  raw?: unknown;
-}
+import type { Patient, DentalPlan } from '../types';
 
 export function Eligibility() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [selectedPatientId, setSelectedPatientId] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [loadingPatients, setLoadingPatients] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<EligibilityData | null>(null);
-  const [showRaw, setShowRaw] = useState(false);
+  const [patients, setPatients]       = useState<Patient[]>([]);
+  const [selectedId, setSelectedId]   = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [fetching, setFetching]       = useState(true);
+  const [error, setError]             = useState('');
+  const [result, setResult]           = useState<Record<string, unknown> | null>(null);
+  const [showRaw, setShowRaw]         = useState(false);
 
   useEffect(() => {
-    supabase.from('patients')
-      .select('*, insurance_company:insurance_companies(id, name, availity_carrier_id)')
-      .order('last_name, first_name')
-      .then(({ data }) => { setPatients((data || []) as Patient[]); setLoadingPatients(false); });
+    (async () => {
+      const { data } = await supabase
+        .from('patients')
+        .select('*, insurance_company:insurance_companies(*), dental_plan:dental_plans(*)')
+        .order('last_name');
+      setPatients(data ?? []);
+      setFetching(false);
+    })();
   }, []);
 
-  const checkEligibility = async () => {
-    if (!selectedPatientId) return;
-    const patient = patients.find(p => p.id === selectedPatientId);
-    if (!patient) return;
-    const company = patient.insurance_company;
-    if (!company) { setError('Patient has no insurance company linked.'); return; }
+  const patient   = patients.find(p => p.id === selectedId) ?? null;
+  const plan      = patient?.dental_plan as DentalPlan | null ?? null;
+  const company   = patient?.insurance_company;
 
-    setError(null); setResult(null); setLoading(true);
+  const handleCheck = async () => {
+    if (!patient) return;
+    if (!company?.availity_carrier_id) { setError('This patient\'s insurance company has no Availity Carrier ID set.'); return; }
+
+    setLoading(true); setError(''); setResult(null);
     try {
-      const raw = await callAvailityApi('check-eligibility', {
-        memberId: patient.member_id,
-        groupNumber: patient.group_number,
-        dateOfBirth: patient.date_of_birth,
-        lastName: patient.last_name,
-        firstName: patient.first_name,
-        carrierCode: company.availity_carrier_id,  // Fixed: use actual carrier code, not UUID
+      const data = await callAvailityApi('check_eligibility', {
+        memberId:      patient.member_id,
+        groupNumber:   patient.group_number ?? '',
+        firstName:     patient.first_name,
+        lastName:      patient.last_name,
+        dateOfBirth:   patient.date_of_birth,
+        carrierCode:   company.availity_carrier_id,   // ✅ Fixed: carrier code not UUID
       });
-      // Normalize the response into a structured format
-      const normalized: EligibilityData = {
-        coverageActive: raw.coverageActive ?? raw.active ?? raw.status === 'active',
-        deductible: raw.deductible ?? raw.deductibleAmount,
-        deductibleMet: raw.deductibleMet ?? raw.deductibleMetAmount,
-        outOfPocketMax: raw.outOfPocketMax ?? raw.outOfPocketMaxAmount,
-        outOfPocketMet: raw.outOfPocketMet ?? raw.outOfPocketMetAmount,
-        preventiveCoverage: raw.preventiveCoverage ?? raw.preventive,
-        basicCoverage: raw.basicCoverage ?? raw.basic,
-        majorCoverage: raw.majorCoverage ?? raw.major,
-        inNetwork: raw.inNetwork ?? raw.networkStatus === 'in',
-        effectiveDate: raw.effectiveDate ?? raw.coverageEffectiveDate,
-        terminationDate: raw.terminationDate ?? raw.coverageTerminationDate,
-        planName: raw.planName ?? raw.plan?.name,
-        groupNumber: raw.groupNumber,
-        subscriberName: raw.subscriberName ?? raw.subscriber?.name,
-        raw,
-      };
-      setResult(normalized);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Eligibility check failed. Please try again.');
-    } finally { setLoading(false); }
+      setResult(data);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Eligibility check failed');
+    }
+    setLoading(false);
   };
 
-  const selectedPatient = patients.find(p => p.id === selectedPatientId);
+  const fmt$ = (v?: number) => v != null ? `$${v.toLocaleString()}` : '—';
+  const fmtPct = (v?: number) => v != null ? `${v}%` : '—';
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-green-600" /> Check Patient Eligibility
+    <div className="space-y-5">
+      {/* Patient Selector */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <User className="w-4 h-4 text-blue-600"/> Select Patient
         </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Patient <span className="text-red-500">*</span></label>
-            {loadingPatients ? (
-              <p className="text-sm text-gray-500 italic py-2 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Loading patients...</p>
-            ) : (
-              <select value={selectedPatientId} onChange={e => { setSelectedPatientId(e.target.value); setResult(null); setError(null); }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500">
-                <option value="">Choose a patient...</option>
-                {patients.map(p => (
-                  <option key={p.id} value={p.id}>{p.first_name} {p.last_name} — {p.member_id}</option>
-                ))}
-              </select>
-            )}
-            {patients.length === 0 && !loadingPatients && (
-              <p className="text-sm text-amber-600 mt-1 flex items-center gap-1"><Info className="w-4 h-4" />No patients registered. Add patients first.</p>
-            )}
+        {fetching ? (
+          <div className="flex items-center gap-2 text-gray-500 text-sm"><Loader2 className="w-4 h-4 animate-spin"/>Loading patients…</div>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-3">
+            <select value={selectedId} onChange={e => { setSelectedId(e.target.value); setResult(null); setError(''); }}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="">— Choose a patient —</option>
+              {patients.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.last_name}, {p.first_name} — Member ID: {p.member_id}
+                </option>
+              ))}
+            </select>
+            <button onClick={handleCheck} disabled={!selectedId || loading}
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <ShieldCheck className="w-4 h-4"/>}
+              {loading ? 'Checking…' : 'Check Eligibility'}
+            </button>
           </div>
+        )}
 
-          {selectedPatient && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-              <p className="font-medium text-blue-900">{selectedPatient.first_name} {selectedPatient.last_name}</p>
-              <p className="text-blue-700">Member ID: {selectedPatient.member_id} · DOB: {selectedPatient.date_of_birth}</p>
-              <p className="text-blue-600 text-xs mt-0.5">
-                {(selectedPatient.insurance_company as any)?.name} · Carrier: {(selectedPatient.insurance_company as any)?.availity_carrier_id}
+        {/* Patient + Plan Summary Card */}
+        {patient && (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Patient info */}
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Patient Details</p>
+              <p className="font-semibold text-gray-900">{patient.first_name} {patient.last_name}</p>
+              <p className="text-sm text-gray-600 mt-1">DOB: {new Date(patient.date_of_birth).toLocaleDateString()}</p>
+              <p className="text-sm text-gray-600">Member ID: <span className="font-mono font-medium">{patient.member_id}</span></p>
+              {patient.group_number && <p className="text-sm text-gray-600">Group #: <span className="font-mono font-medium">{patient.group_number}</span></p>}
+              <p className="text-sm text-gray-600 mt-1">
+                Insurer: <span className="font-medium">{company?.name ?? '—'}</span>
+                {company?.availity_carrier_id && <span className="ml-1 text-xs text-blue-600 font-mono">({company.availity_carrier_id})</span>}
               </p>
             </div>
-          )}
 
-          {error && (
-            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{error}</p>
+            {/* Dental Plan fields — shown here so user understands what their plan covers */}
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+              <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                <Award className="w-3 h-3"/> Dental Plan on File
+              </p>
+              {plan ? (
+                <div className="space-y-1.5">
+                  <p className="font-semibold text-gray-900">{plan.plan_name}</p>
+                  <p className="text-xs text-gray-500">Plan ID: <span className="font-mono">{plan.plan_id}</span> · {plan.coverage_type}</p>
+                  <div className="mt-2 grid grid-cols-2 gap-1 text-sm">
+                    <div className="flex items-center gap-1.5 text-gray-700">
+                      <DollarSign className="w-3.5 h-3.5 text-orange-500"/>
+                      <span className="text-xs text-gray-500">Deductible:</span>
+                      <span className="font-semibold">{fmt$(plan.deductible)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-gray-700">
+                      <DollarSign className="w-3.5 h-3.5 text-green-500"/>
+                      <span className="text-xs text-gray-500">Annual Max:</span>
+                      <span className="font-semibold">{fmt$(plan.annual_max)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-gray-700">
+                      <Percent className="w-3.5 h-3.5 text-blue-500"/>
+                      <span className="text-xs text-gray-500">Preventive:</span>
+                      <span className="font-semibold text-green-700">{fmtPct(plan.preventive_coverage)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-gray-700">
+                      <Percent className="w-3.5 h-3.5 text-blue-500"/>
+                      <span className="text-xs text-gray-500">Basic:</span>
+                      <span className="font-semibold text-yellow-700">{fmtPct(plan.basic_coverage)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-gray-700 col-span-2">
+                      <Percent className="w-3.5 h-3.5 text-blue-500"/>
+                      <span className="text-xs text-gray-500">Major:</span>
+                      <span className="font-semibold text-red-700">{fmtPct(plan.major_coverage)}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 rounded-lg p-2 mt-1">
+                  <Info className="w-4 h-4 shrink-0 mt-0.5"/>
+                  <span>No dental plan linked to this patient. Go to the Patients tab to assign one.</span>
+                </div>
+              )}
             </div>
-          )}
-
-          <button onClick={checkEligibility} disabled={loading || !selectedPatientId}
-            className="w-full bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 disabled:bg-gray-300 font-medium transition flex items-center justify-center gap-2">
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Checking with Availity...</> : <><ShieldCheck className="w-4 h-4" />Check Eligibility with Availity</>}
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
+      {/* Error */}
+      {error && (
+        <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5"/>
+          <div><p className="font-medium">Eligibility check failed</p><p className="mt-0.5 text-red-600">{error}</p></div>
+        </div>
+      )}
+
+      {/* Results */}
       {result && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Eligibility Results</h3>
-            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${result.coverageActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-              {result.coverageActive ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-              {result.coverageActive ? 'Coverage Active' : 'Not Active'}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700">
+            <CheckCircle className="w-5 h-5"/>
+            <span className="font-semibold">Eligibility Verified via Availity</span>
+          </div>
+
+          {/* Plan fields summary in results */}
+          {plan && (
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-gray-100 bg-blue-50">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Award className="w-4 h-4 text-blue-600"/> Plan Coverage Summary — {plan.plan_name}
+                </h4>
+                <p className="text-xs text-gray-500 mt-0.5">Based on your saved dental plan. Confirm exact amounts with the Availity response below.</p>
+              </div>
+              <div className="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {[
+                  { label: 'Annual Deductible', value: fmt$(plan.deductible), icon: DollarSign, color: 'text-orange-600', bg: 'bg-orange-50' },
+                  { label: 'Annual Maximum',    value: fmt$(plan.annual_max), icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
+                  { label: 'Preventive Care',   value: fmtPct(plan.preventive_coverage), icon: Percent, color: 'text-blue-600', bg: 'bg-blue-50', note: 'Cleanings, X-rays, Exams' },
+                  { label: 'Basic Services',    value: fmtPct(plan.basic_coverage), icon: Percent, color: 'text-yellow-600', bg: 'bg-yellow-50', note: 'Fillings, Simple extractions' },
+                  { label: 'Major Services',    value: fmtPct(plan.major_coverage), icon: Percent, color: 'text-red-600', bg: 'bg-red-50', note: 'Crowns, Root canals, Dentures' },
+                ].map(({ label, value, icon: Icon, color, bg, note }) => (
+                  <div key={label} className={`${bg} rounded-xl p-4 text-center border border-white`}>
+                    <Icon className={`w-5 h-5 ${color} mx-auto mb-1`}/>
+                    <p className="text-2xl font-bold text-gray-900">{value}</p>
+                    <p className="text-xs font-medium text-gray-600 mt-0.5">{label}</p>
+                    {note && <p className="text-xs text-gray-400 mt-0.5">{note}</p>}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Coverage Summary Cards */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: 'Preventive', value: result.preventiveCoverage, suffix: '%', color: 'green' },
-              { label: 'Basic', value: result.basicCoverage, suffix: '%', color: 'blue' },
-              { label: 'Major', value: result.majorCoverage, suffix: '%', color: 'purple' },
-            ].map(({ label, value, suffix, color }) => (
-              <div key={label} className={`p-3 bg-${color}-50 border border-${color}-200 rounded-lg text-center`}>
-                <p className={`text-2xl font-bold text-${color}-700`}>{value != null ? `${value}${suffix}` : '—'}</p>
-                <p className={`text-xs text-${color}-600 mt-0.5`}>{label}</p>
+          {/* Key Availity fields if present */}
+          {(result.status || result.planBeginDate || result.networkStatus) && (
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-blue-600"/> Live Availity Response — Key Details
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                {result.status && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-gray-400 uppercase tracking-wide">Coverage Status</span>
+                    <span className={`font-semibold ${result.status === 'Active' ? 'text-green-600' : 'text-red-600'}`}>{String(result.status)}</span>
+                  </div>
+                )}
+                {result.planBeginDate && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-gray-400 uppercase tracking-wide">Plan Start Date</span>
+                    <span className="font-semibold text-gray-900 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-gray-400"/>{String(result.planBeginDate)}
+                    </span>
+                  </div>
+                )}
+                {result.networkStatus && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-gray-400 uppercase tracking-wide">Network</span>
+                    <span className="font-semibold text-gray-900">{String(result.networkStatus)}</span>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-
-          {/* Financial Details */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'Deductible', value: result.deductible, met: result.deductibleMet },
-              { label: 'Out-of-Pocket Max', value: result.outOfPocketMax, met: result.outOfPocketMet },
-            ].map(({ label, value, met }) => (
-              <div key={label} className="p-3 border border-gray-200 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">{label}</p>
-                {value != null ? (
-                  <>
-                    <p className="text-lg font-semibold text-gray-900">${value.toLocaleString()}</p>
-                    {met != null && <p className="text-xs text-gray-500">${met.toLocaleString()} met</p>}
-                  </>
-                ) : <p className="text-sm text-gray-400">Not available</p>}
-              </div>
-            ))}
-          </div>
-
-          {/* Other Details */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            {result.planName && <div className="p-2 bg-gray-50 rounded"><span className="text-gray-500 text-xs">Plan:</span><p className="font-medium text-gray-800">{result.planName}</p></div>}
-            {result.inNetwork != null && <div className="p-2 bg-gray-50 rounded"><span className="text-gray-500 text-xs">Network:</span><p className={`font-medium ${result.inNetwork ? 'text-green-700' : 'text-amber-700'}`}>{result.inNetwork ? 'In-Network' : 'Out-of-Network'}</p></div>}
-            {result.effectiveDate && <div className="p-2 bg-gray-50 rounded"><span className="text-gray-500 text-xs">Effective:</span><p className="font-medium text-gray-800">{result.effectiveDate}</p></div>}
-            {result.terminationDate && <div className="p-2 bg-gray-50 rounded"><span className="text-gray-500 text-xs">Term Date:</span><p className="font-medium text-gray-800">{result.terminationDate}</p></div>}
-          </div>
+            </div>
+          )}
 
           {/* Raw JSON toggle */}
-          <div>
-            <button onClick={() => setShowRaw(!showRaw)} className="text-sm text-blue-600 hover:underline">
-              {showRaw ? 'Hide' : 'Show'} raw API response
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <button onClick={() => setShowRaw(s => !s)}
+              className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+              <span>Full Availity API Response (JSON)</span>
+              {showRaw ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
             </button>
             {showRaw && (
-              <pre className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 overflow-auto max-h-48">
-                {JSON.stringify(result.raw, null, 2)}
+              <pre className="px-5 pb-5 text-xs bg-gray-50 overflow-auto max-h-80 text-gray-700">
+                {JSON.stringify(result, null, 2)}
               </pre>
             )}
           </div>
