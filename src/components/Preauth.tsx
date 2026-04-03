@@ -218,7 +218,7 @@ export function Preauth() {
       <div className="space-y-4">
         {(result as Record<string,unknown>)._live && <LiveBanner/>}
         {(result as Record<string,unknown>)._mock && <DemoBanner apiError={(result as Record<string,unknown>)._api_error as string|undefined}/>}
-        {/* Status banner */
+        {/* Status banner */}
         <div className={`border rounded-xl p-5 flex items-start gap-4 ${ui.color}`}>
           <Icon className="w-7 h-7 shrink-0 mt-0.5"/>
           <div className="flex-1">
