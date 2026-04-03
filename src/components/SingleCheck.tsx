@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase, callAvailityApi } from '../lib/supabase';
 import { InsurancePicker } from './InsurancePicker';
-import { DemoBanner } from './DemoBanner';
+import { DemoBanner, LiveBanner } from './DemoBanner';
 
 /* ─── Types ─────────────────────────────────────────── */
 interface PatientForm {
@@ -81,8 +81,15 @@ function DentalEligibilityCard({ result, patient, insurance }: {
   const waitBasic=(cvg.basic       as EligResult)?.waiting_period as string|null ?? null;
   const waitMaj = (cvg.major       as EligResult)?.waiting_period as string|null ?? null;
 
+  const isMock = !!(result as EligResult)._mock;
+  const isLive = !!(result as EligResult)._live;
+  const apiError = (result as EligResult)._api_error as string | undefined;
+
   return (
     <div id="eligibility-result" className="space-y-4">
+      {/* Live/Demo status banner */}
+      {isLive && <LiveBanner />}
+      {isMock && <DemoBanner apiError={apiError} />}
       {/* Header */}
       <div className={`flex items-center gap-3 p-4 rounded-xl border ${isActive ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
         {isActive

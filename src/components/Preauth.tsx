@@ -17,7 +17,7 @@ import {
 import { supabase, callAvailityApi } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { InsurancePicker } from './InsurancePicker';
-import { DemoBanner } from './DemoBanner';
+import { DemoBanner, LiveBanner } from './DemoBanner';
 
 /* ── Common ADA procedure codes ─────────────────────────────────── */
 const ADA_CODES = [
@@ -216,7 +216,8 @@ export function Preauth() {
 
     return (
       <div className="space-y-4">
-        {result._demo && <DemoBanner/>}
+        {(result as Record<string,unknown>)._live && <LiveBanner/>}
+        {(result as Record<string,unknown>)._mock && <DemoBanner apiError={(result as Record<string,unknown>)._api_error as string|undefined}/>}
         {/* Status banner */
         <div className={`border rounded-xl p-5 flex items-start gap-4 ${ui.color}`}>
           <Icon className="w-7 h-7 shrink-0 mt-0.5"/>
