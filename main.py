@@ -29,7 +29,7 @@ from contextlib import contextmanager
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Request, Security, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import HTMLResponse, Response
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -360,6 +360,18 @@ async def get_template():
     template += "Jane,Doe,1980-06-01,F,TX,,,Delta Dental PPO,DD987654,,dental,1980-06-01\n"
     return Response(content=template, media_type="text/csv",
                     headers={"Content-Disposition": "attachment; filename=eligibility_template.csv"})
+
+
+# ─── Root — serve demo HTML page ─────────────────────────────────────────────
+
+@app.get("/")
+async def root():
+    here = os.path.dirname(__file__)
+    path = os.path.join(here, "index.html")
+    if os.path.isfile(path):
+        with open(path, encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+    return HTMLResponse("<h1>Dharma Eligibility API</h1><p>See <a href='/docs'>/docs</a> for API docs.</p>")
 
 
 # ─── Health check (no auth — used by load balancer / Caddy HEALTHCHECK) ───────
