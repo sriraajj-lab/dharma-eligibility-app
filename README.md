@@ -153,3 +153,9 @@ exporter.py          CSV/Excel export
 
 ### v2.0
 - Initial release
+
+---
+
+## License
+
+MIT. See [LICENSE](LICENSE).
