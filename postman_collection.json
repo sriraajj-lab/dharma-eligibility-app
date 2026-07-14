@@ -1,0 +1,200 @@
+{
+  "info": {
+    "name": "Dharma Eligibility API — v2.2",
+    "_postman_id": "dharma-eligibility-v22",
+    "description": "Insurance Eligibility & COB API by Aria Agency.\n\nBase URL: https://dharma-eligibility.vercel.app\n\nAuthentication: All endpoints require `X-API-Key` header.\nDemo key: `demo-key-2024`\n\nSet DEMO_MODE=true on the server for sandbox responses without live API keys.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://dharma-eligibility.vercel.app", "type": "string" },
+    { "key": "api_key",  "value": "demo-key-2024", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] },
+            "description": "Returns API status, version, and database connectivity."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "body": "{\n  \"status\": \"ok\",\n  \"version\": \"2.2.0\",\n  \"db\": \"sqlite\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Eligibility",
+      "item": [
+        {
+          "name": "Dental — Delta Dental PPO",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key",    "value": "{{api_key}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/resolve", "host": ["{{base_url}}"], "path": ["api","resolve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Jane\",\n  \"last_name\": \"Doe\",\n  \"dob\": \"1985-03-10\",\n  \"coverages\": [\n    {\n      \"payer_name\": \"Delta Dental\",\n      \"member_id\": \"DD-987654\",\n      \"group_number\": \"GRP-00123\",\n      \"plan_type\": \"dental\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Check dental eligibility for a Delta Dental PPO member.\n\nReturns: annual maximum, deductible, preventive/basic/major/ortho coverage percentages, waiting periods, network status."
+          },
+          "response": [
+            {
+              "name": "200 — Active Dental Coverage",
+              "status": "OK", "code": 200,
+              "body": "{\n  \"active\": true,\n  \"plan_name\": \"Delta Dental PPO\",\n  \"plan_begin_date\": \"2026-01-01\",\n  \"plan_type\": \"dental\",\n  \"annual_maximum\": 2000.0,\n  \"annual_maximum_used\": 350.0,\n  \"annual_maximum_remaining\": 1650.0,\n  \"deductible\": 50.0,\n  \"deductible_met\": 50.0,\n  \"preventive_coverage\": 1.0,\n  \"basic_coverage\": 0.8,\n  \"major_coverage\": 0.5,\n  \"ortho_coverage\": 0.5,\n  \"ortho_lifetime_max\": 1500.0,\n  \"waiting_period_basic\": \"None\",\n  \"waiting_period_major\": \"12 months\",\n  \"network\": \"PPO In-Network\",\n  \"group_number\": \"GRP-00123\",\n  \"member_id\": \"DD-987654\",\n  \"active_medical\": false,\n  \"active_dental\": true,\n  \"_demo\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Dental — MetLife Dental",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key",    "value": "{{api_key}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/resolve", "host": ["{{base_url}}"], "path": ["api","resolve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Mark\",\n  \"last_name\": \"Chen\",\n  \"dob\": \"1978-07-22\",\n  \"coverages\": [\n    {\n      \"payer_name\": \"MetLife Dental\",\n      \"member_id\": \"ML-334455\",\n      \"group_number\": \"GRP-00456\",\n      \"plan_type\": \"dental\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Medical — Aetna",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key",    "value": "{{api_key}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/resolve", "host": ["{{base_url}}"], "path": ["api","resolve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\",\n  \"dob\": \"1960-05-20\",\n  \"coverages\": [\n    {\n      \"payer_name\": \"Aetna\",\n      \"member_id\": \"AET-555666\",\n      \"group_number\": \"GRP-00789\",\n      \"plan_type\": \"medical\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Check medical eligibility for an Aetna member.\n\nReturns: deductible, OOP max, copay, coinsurance."
+          }
+        },
+        {
+          "name": "Medical — Medicare",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key",    "value": "{{api_key}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/resolve", "host": ["{{base_url}}"], "path": ["api","resolve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Bob\",\n  \"last_name\": \"Jones\",\n  \"dob\": \"1950-01-15\",\n  \"coverages\": [\n    {\n      \"payer_name\": \"Medicare\",\n      \"member_id\": \"1EG4-TE5-MK72\",\n      \"plan_type\": \"medical\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "COB — Dual Coverage (Aetna + Medicare)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key",    "value": "{{api_key}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/resolve", "host": ["{{base_url}}"], "path": ["api","resolve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Alice\",\n  \"last_name\": \"Brown\",\n  \"dob\": \"1958-09-12\",\n  \"coverages\": [\n    {\n      \"payer_name\": \"Aetna\",\n      \"member_id\": \"AET-999001\",\n      \"plan_type\": \"medical\",\n      \"subscriber_dob\": \"1958-09-12\"\n    },\n    {\n      \"payer_name\": \"Medicare\",\n      \"member_id\": \"1EG4-TE5-AB99\",\n      \"plan_type\": \"medical\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "COB scenario: patient has both employer (Aetna) and Medicare coverage.\n\nThe COB engine applies Medicare Secondary Payer rules to determine primary/secondary order."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Batch",
+      "item": [
+        {
+          "name": "Batch Resolve — Mixed Dental + Medical",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key",    "value": "{{api_key}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/batch/resolve", "host": ["{{base_url}}"], "path": ["api","batch","resolve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Doe\",\n    \"dob\": \"1985-03-10\",\n    \"coverages\": [{\"payer_name\": \"Delta Dental\", \"member_id\": \"DD-987654\", \"plan_type\": \"dental\"}]\n  },\n  {\n    \"first_name\": \"John\",\n    \"last_name\": \"Smith\",\n    \"dob\": \"1960-05-20\",\n    \"coverages\": [{\"payer_name\": \"Aetna\", \"member_id\": \"AET-555666\", \"plan_type\": \"medical\"}]\n  },\n  {\n    \"first_name\": \"Bob\",\n    \"last_name\": \"Jones\",\n    \"dob\": \"1950-01-15\",\n    \"coverages\": [{\"payer_name\": \"Medicare\", \"member_id\": \"1EG4-TE5-MK72\", \"plan_type\": \"medical\"}]\n  }\n]",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Submit a batch of patients for eligibility resolution.\n\nReturns a job_id. Poll GET /api/batch/{job_id} for status, then GET /api/batch/{job_id}/results for results."
+          }
+        },
+        {
+          "name": "Get Batch Status",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "X-API-Key", "value": "{{api_key}}" } ],
+            "url": { "raw": "{{base_url}}/api/batch/{{job_id}}", "host": ["{{base_url}}"], "path": ["api","batch","{{job_id}}"] },
+            "description": "Poll batch job status. Set `job_id` variable from the batch submit response."
+          }
+        },
+        {
+          "name": "Get Batch Results",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "X-API-Key", "value": "{{api_key}}" } ],
+            "url": { "raw": "{{base_url}}/api/batch/{{job_id}}/results", "host": ["{{base_url}}"], "path": ["api","batch","{{job_id}}","results"] }
+          }
+        },
+        {
+          "name": "Export Batch — CSV",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "X-API-Key", "value": "{{api_key}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/batch/{{job_id}}/export?format=csv",
+              "host": ["{{base_url}}"], "path": ["api","batch","{{job_id}}","export"],
+              "query": [{ "key": "format", "value": "csv" }]
+            }
+          }
+        },
+        {
+          "name": "Export Batch — Excel",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "X-API-Key", "value": "{{api_key}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/batch/{{job_id}}/export?format=xlsx",
+              "host": ["{{base_url}}"], "path": ["api","batch","{{job_id}}","export"],
+              "query": [{ "key": "format", "value": "xlsx" }]
+            }
+          }
+        },
+        {
+          "name": "Download CSV Template",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/template.csv", "host": ["{{base_url}}"], "path": ["api","template.csv"] },
+            "description": "Download the CSV upload template with example rows for dental and medical patients."
+          }
+        }
+      ]
+    }
+  ]
+}

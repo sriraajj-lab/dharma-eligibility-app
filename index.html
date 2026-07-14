@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dharma Eligibility — Live Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Noto+Serif:wght@500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --outer-bg: #E4E1DC;
+    --page-bg: #FDFCF9;
+    --surface: #FFFFFF;
+    --border: #E8E6E2;
+    --divider: #C5C0BA;
+    --text-primary: #151515;
+    --text-body: #3D3D3D;
+    --text-secondary: #717171;
+    --hero-bg: #D7EDE2;
+    --hero-deco: #8FC5A8;
+    --hero-deco2: #5FA882;
+    --success-bg: #E8FBCF; --success-fg: #3D4826;
+    --warning-bg: #FFF0DC; --warning-fg: #E47700;
+    --info-bg: #DEE5F7; --info-fg: #3E54CE;
+    --error-bg: #FDECEA; --error-fg: #C4433A;
+    --accent: #2D7A5A;
+    --accent-light: #4CAF80;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter Tight', sans-serif;
+    background: var(--outer-bg);
+    min-height: 100vh;
+    padding: 24px 16px;
+    color: var(--text-body);
+  }
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: var(--page-bg);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--hero-bg);
+    padding: 40px 48px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero svg.blobs { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .hero-inner { position: relative; z-index: 1; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--accent); background: rgba(45,122,90,0.12);
+    padding: 4px 10px; border-radius: 20px; margin-bottom: 14px;
+  }
+  .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-light); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+  .hero h1 { font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1.2; margin-bottom: 8px; }
+  .hero p { font-size: 14px; color: var(--text-secondary); max-width: 560px; line-height: 1.6; }
+  .hero-divider { border: none; border-top: 0.5px solid rgba(255,255,255,0.6); margin: 20px 0; }
+  .hero-stats { display: flex; gap: 32px; flex-wrap: wrap; }
+  .hero-stat { }
+  .hero-stat .val { font-family: 'Noto Serif', serif; font-size: 26px; font-weight: 500; color: var(--text-primary); letter-spacing: -0.02em; }
+  .hero-stat .lbl { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* ── Main layout ── */
+  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  @media(max-width:768px) { .main { grid-template-columns: 1fr; } body { padding: 0; } .page { border-radius: 0; } .hero { padding: 28px 20px 24px; } }
+
+  /* ── Panel ── */
+  .panel { padding: 32px 36px; }
+  .panel + .panel { border-left: 0.5px solid var(--border); }
+  @media(max-width:768px) { .panel + .panel { border-left: none; border-top: 0.5px solid var(--border); } .panel { padding: 24px 20px; } }
+  .panel-title { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+  .panel-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+  .section-rule { border: none; border-top: 0.5px solid var(--border); margin: 20px 0; }
+
+  /* ── Form ── */
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
+  input, select {
+    width: 100%; padding: 9px 12px; font-size: 14px; font-family: 'Inter Tight', sans-serif;
+    border: 0.5px solid var(--border); border-radius: 8px; background: var(--surface);
+    color: var(--text-primary); outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,122,90,0.1); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── Payer tabs ── */
+  .payer-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .payer-tab {
+    font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px;
+    border: 0.5px solid var(--border); background: var(--surface); color: var(--text-secondary);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .payer-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .payer-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ── Submit button ── */
+  .btn-submit {
+    width: 100%; padding: 12px; font-size: 14px; font-weight: 600; font-family: 'Inter Tight', sans-serif;
+    background: var(--accent); color: #fff; border: none; border-radius: 10px;
+    cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-submit:hover { background: #236648; }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { background: var(--divider); cursor: not-allowed; }
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── API key note ── */
+  .api-note {
+    font-size: 12px; color: var(--text-secondary); background: var(--info-bg);
+    border-radius: 8px; padding: 8px 12px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .api-note code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--info-fg); }
+
+  /* ── Results panel ── */
+  .result-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 300px; color: var(--text-secondary); text-align: center; gap: 12px;
+  }
+  .result-empty svg { opacity: 0.25; }
+  .result-empty p { font-size: 13px; }
+
+  /* ── Status badge ── */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+    margin-bottom: 16px;
+  }
+  .status-badge.active { background: var(--success-bg); color: var(--success-fg); }
+  .status-badge.inactive { background: var(--error-bg); color: var(--error-fg); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .status-badge.active .status-dot { background: var(--success-fg); }
+  .status-badge.inactive .status-dot { background: var(--error-fg); }
+
+  /* ── Benefit cards ── */
+  .benefit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .benefit-card {
+    background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .benefit-card .bc-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .benefit-card .bc-value { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+  .benefit-card .bc-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* ── Progress bar ── */
+  .progress-row { margin-bottom: 12px; }
+  .progress-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+  .progress-header .ph-label { color: var(--text-secondary); font-weight: 500; }
+  .progress-header .ph-val { color: var(--text-primary); font-weight: 600; }
+  .progress-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+  .progress-fill.warning { background: #E47700; }
+  .progress-fill.info { background: #3E54CE; }
+
+  /* ── Coverage type pills ── */
+  .coverage-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .coverage-pill {
+    font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px;
+  }
+  .coverage-pill.dental { background: var(--success-bg); color: var(--success-fg); }
+  .coverage-pill.medical { background: var(--info-bg); color: var(--info-fg); }
+  .coverage-pill.stub { background: var(--warning-bg); color: var(--warning-fg); }
+  .coverage-pill.demo { background: #F3F0FF; color: #6B4FBB; }
+
+  /* ── Benefit table ── */
+  .benefit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .benefit-table th { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-align: left; padding: 6px 0; border-bottom: 1px solid var(--divider); text-transform: uppercase; letter-spacing: 0.04em; }
+  .benefit-table td { padding: 8px 0; border-bottom: 0.5px solid var(--border); color: var(--text-body); }
+  .benefit-table tr:last-child td { border-bottom: none; }
+  .benefit-table td:last-child { text-align: right; font-weight: 600; color: var(--text-primary); }
+
+  /* ── Raw JSON toggle ── */
+  .json-toggle { font-size: 12px; color: var(--accent); cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 12px; user-select: none; }
+  .json-toggle:hover { text-decoration: underline; }
+  .json-block {
+    display: none; margin-top: 8px; background: #1A1A2E; border-radius: 10px;
+    padding: 14px; overflow-x: auto; max-height: 260px; overflow-y: auto;
+  }
+  .json-block pre { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #A8D8A8; line-height: 1.6; white-space: pre-wrap; }
+  .json-block.open { display: block; }
+
+  /* ── Error alert ── */
+  .alert-error {
+    background: var(--error-bg); color: var(--error-fg); border-radius: 10px;
+    padding: 12px 16px; font-size: 13px; margin-bottom: 12px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    background: var(--hero-bg); padding: 24px 48px; position: relative; overflow: hidden;
+    border-top: 0.5px solid rgba(255,255,255,0.5);
+  }
+  .footer-inner { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .footer-brand .fb-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .footer-brand .fb-sub { font-size: 12px; color: var(--text-secondary); }
+  .footer-meta { font-size: 12px; color: var(--text-secondary); text-align: right; }
+  .footer-meta a { color: var(--accent); text-decoration: none; }
+  .footer-meta a:hover { text-decoration: underline; }
+  @media(max-width:768px) { .footer { padding: 20px; } .footer-meta { text-align: left; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <svg class="blobs" viewBox="0 0 1100 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <path d="M80,40 C120,10 180,60 160,100 C140,140 80,130 60,100 C40,70 40,70 80,40Z" fill="#8FC5A8" opacity="0.18"/>
+      <path d="M900,20 C950,0 1020,40 1010,90 C1000,140 930,150 890,110 C850,70 850,40 900,20Z" fill="#5FA882" opacity="0.15"/>
+      <path d="M500,150 C540,120 600,140 610,170 C620,200 560,210 520,190 C480,170 460,180 500,150Z" fill="#8FC5A8" opacity="0.12"/>
+      <path d="M300,10 C330,-10 380,20 370,60 C360,100 310,100 290,70 C270,40 270,30 300,10Z" fill="#5FA882" opacity="0.13"/>
+    </svg>
+    <div class="hero-inner">
+      <div class="eyebrow"><span class="eyebrow-dot"></span>Live Demo · v2.2</div>
+      <h1>Insurance Eligibility Verification</h1>
+      <p>Real-time eligibility checks for dental, medical, and COB scenarios. Powered by Stedi 270/271 + pVerify. Demo mode active — no PHI required.</p>
+      <hr class="hero-divider"/>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="val">33</div><div class="lbl">Supported Payers</div></div>
+        <div class="hero-stat"><div class="val">3</div><div class="lbl">Coverage Types</div></div>
+        <div class="hero-stat"><div class="val">&lt;2s</div><div class="lbl">Avg Response Time</div></div>
+        <div class="hero-stat"><div class="val">v2.2</div><div class="lbl">Current Version</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Left: Input -->
+    <div class="panel">
+      <div class="panel-title">Patient Lookup</div>
+      <div class="panel-sub">Enter patient details to check eligibility</div>
+
+      <div class="api-note">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#3E54CE" stroke-width="1.2"/><path d="M8 7v5M8 5v1" stroke="#3E54CE" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Demo API key: <code>demo-key-2024</code> &nbsp;·&nbsp; DEMO_MODE active
+      </div>
+
+      <!-- Payer type tabs -->
+      <div style="margin-bottom:8px;">
+        <label>Coverage Type</label>
+        <div class="payer-tabs">
+          <button class="payer-tab active" data-type="dental" onclick="selectType('dental',this)">🦷 Dental</button>
+          <button class="payer-tab" data-type="medical" onclick="selectType('medical',this)">🏥 Medical</button>
+          <button class="payer-tab" data-type="cob" onclick="selectType('cob',this)">⚖️ COB</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="first_name" value="Jane" placeholder="Jane"/>
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="last_name" value="Doe" placeholder="Doe"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <input type="date" id="dob" value="1985-03-10"/>
+        </div>
+        <div class="form-group">
+          <label>Member ID</label>
+          <input type="text" id="member_id" value="DD-987654" placeholder="DD-987654"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Payer / Insurance</label>
+        <select id="payer_name" onchange="onPayerChange()">
+          <optgroup label="Dental">
+            <option value="Delta Dental" selected>Delta Dental PPO</option>
+            <option value="MetLife Dental">MetLife Dental</option>
+            <option value="VSP">VSP Vision</option>
+          </optgroup>
+          <optgroup label="Medical">
+            <option value="Aetna">Aetna</option>
+            <option value="Cigna">Cigna</option>
+            <option value="United Healthcare">United Healthcare</option>
+            <option value="Humana">Humana</option>
+            <option value="Anthem">Anthem BCBS</option>
+          </optgroup>
+          <optgroup label="Government">
+            <option value="Medicare">Medicare</option>
+            <option value="Medicaid">Medicaid</option>
+            <option value="Tricare">TRICARE</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="form-group" id="group-field">
+        <label>Group Number <span style="color:var(--text-secondary);font-weight:400">(optional)</span></label>
+        <input type="text" id="group_number" value="GRP-00123" placeholder="GRP-00123"/>
+      </div>
+
+      <hr class="section-rule"/>
+
+      <button class="btn-submit" id="submitBtn" onclick="runCheck()">
+        <span class="spinner" id="spinner"></span>
+        <span id="btnText">Check Eligibility</span>
+      </button>
+
+      <!-- Quick presets -->
+      <div style="margin-top:16px;">
+        <div style="font-size:11px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Quick Presets</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="payer-tab" onclick="loadPreset('dental_delta')">Delta Dental</button>
+          <button class="payer-tab" onclick="loadPreset('dental_metlife')">MetLife Dental</button>
+          <button class="payer-tab" onclick="loadPreset('medical_aetna')">Aetna Medical</button>
+          <button class="payer-tab" onclick="loadPreset('medicare')">Medicare</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Results -->
+    <div class="panel" id="results-panel">
+      <div class="panel-title">Eligibility Results</div>
+      <div class="panel-sub">Results will appear here after lookup</div>
+
+      <div class="result-empty" id="empty-state">
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#C5C0BA" stroke-width="1.5"/><path d="M20 28h16M28 20v16" stroke="#C5C0BA" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <p>Select a patient and click<br/><strong>Check Eligibility</strong> to see results</p>
+      </div>
+
+      <div id="result-content" style="display:none;"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <svg class="blobs" viewBox="0 0 1100 100" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <path d="M50,20 C90,-5 150,30 140,65 C130,100 70,95 50,65 C30,35 10,45 50,20Z" fill="#8FC5A8" opacity="0.15"/>
+      <path d="M950,10 C990,-10 1060,25 1050,60 C1040,95 970,100 940,70 C910,40 910,30 950,10Z" fill="#5FA882" opacity="0.13"/>
+    </svg>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="fb-title">Dharma Eligibility API</div>
+        <div class="fb-sub">Insurance Eligibility & COB · v2.2.0</div>
+      </div>
+      <div class="footer-meta">
+        <div>API: <a href="https://dharma-eligibility.vercel.app" target="_blank">dharma-eligibility.vercel.app</a></div>
+        <div style="margin-top:4px;">Built by <a href="https://allyhub.com" target="_blank">AllyHub AI</a> · Aria Agency</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = 'https://dharma-eligibility.vercel.app';
+const API_KEY  = 'demo-key-2024';
+
+let currentType = 'dental';
+
+const PRESETS = {
+  dental_delta:   { first_name:'Jane', last_name:'Doe',   dob:'1985-03-10', member_id:'DD-987654',  group_number:'GRP-00123', payer:'Delta Dental',  type:'dental'  },
+  dental_metlife: { first_name:'Mark', last_name:'Chen',  dob:'1978-07-22', member_id:'ML-334455',  group_number:'GRP-00456', payer:'MetLife Dental',type:'dental'  },
+  medical_aetna:  { first_name:'John', last_name:'Smith', dob:'1960-05-20', member_id:'AET-555666', group_number:'GRP-00789', payer:'Aetna',         type:'medical' },
+  medicare:       { first_name:'Bob',  last_name:'Jones', dob:'1950-01-15', member_id:'1EG4-TE5-MK72', group_number:'',       payer:'Medicare',      type:'medical' },
+};
+
+function selectType(type, el) {
+  currentType = type;
+  document.querySelectorAll('.payer-tab[data-type]').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  // Update payer dropdown to show relevant options
+  const sel = document.getElementById('payer_name');
+  if (type === 'dental') {
+    sel.value = 'Delta Dental';
+    document.getElementById('member_id').value = 'DD-987654';
+  } else if (type === 'medical') {
+    sel.value = 'Aetna';
+    document.getElementById('member_id').value = 'AET-555666';
+  } else if (type === 'cob') {
+    sel.value = 'Aetna';
+    document.getElementById('member_id').value = 'AET-555666';
+  }
+}
+
+function onPayerChange() {
+  const payer = document.getElementById('payer_name').value.toLowerCase();
+  if (payer.includes('dental') || payer.includes('vsp')) {
+    currentType = 'dental';
+    document.querySelectorAll('.payer-tab[data-type]').forEach(t => t.classList.remove('active'));
+    document.querySelector('.payer-tab[data-type="dental"]').classList.add('active');
+  }
+}
+
+function loadPreset(key) {
+  const p = PRESETS[key];
+  if (!p) return;
+  document.getElementById('first_name').value   = p.first_name;
+  document.getElementById('last_name').value    = p.last_name;
+  document.getElementById('dob').value          = p.dob;
+  document.getElementById('member_id').value    = p.member_id;
+  document.getElementById('group_number').value = p.group_number;
+  document.getElementById('payer_name').value   = p.payer;
+  currentType = p.type;
+  document.querySelectorAll('.payer-tab[data-type]').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector(`.payer-tab[data-type="${p.type}"]`);
+  if (tab) tab.classList.add('active');
+}
+
+async function runCheck() {
+  const btn = document.getElementById('submitBtn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btnText');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Checking…';
+
+  const payer = document.getElementById('payer_name').value;
+  const isDental = currentType === 'dental' || payer.toLowerCase().includes('dental') || payer.toLowerCase().includes('vsp');
+
+  const body = {
+    first_name:   document.getElementById('first_name').value,
+    last_name:    document.getElementById('last_name').value,
+    dob:          document.getElementById('dob').value,
+    coverages: [{
+      payer_name:   payer,
+      member_id:    document.getElementById('member_id').value,
+      group_number: document.getElementById('group_number').value,
+      plan_type:    isDental ? 'dental' : 'medical',
+    }]
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': API_KEY },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    renderResult(data, body);
+  } catch(e) {
+    renderError(e.message);
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Check Eligibility';
+  }
+}
+
+function fmt(val, type='currency') {
+  if (val === null || val === undefined) return '—';
+  if (type === 'currency') return '$' + Number(val).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (type === 'pct') return Math.round(val * 100) + '%';
+  return val;
+}
+
+function renderResult(data, req) {
+  document.getElementById('empty-state').style.display = 'none';
+  const el = document.getElementById('result-content');
+  el.style.display = 'block';
+
+  const isDental  = data.active_dental || data.plan_type === 'dental';
+  const isMedical = data.active_medical;
+  const isActive  = data.active;
+  const isDemo    = data._demo;
+  const isStub    = data._stub;
+
+  let html = '';
+
+  // Status badge
+  html += `<div class="status-badge ${isActive ? 'active' : 'inactive'}">
+    <span class="status-dot"></span>
+    ${isActive ? 'Coverage Active' : 'No Active Coverage'}
+  </div>`;
+
+  // Pills
+  html += '<div class="coverage-pills">';
+  if (isDental)  html += '<span class="coverage-pill dental">🦷 Dental</span>';
+  if (isMedical) html += '<span class="coverage-pill medical">🏥 Medical</span>';
+  if (isDemo)    html += '<span class="coverage-pill demo">Demo Mode</span>';
+  if (isStub)    html += '<span class="coverage-pill stub">⚠ Stub</span>';
+  html += '</div>';
+
+  // Plan name
+  if (data.plan_name) {
+    html += `<div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">${data.plan_name}</div>`;
+  }
+  if (data.plan_begin_date) {
+    html += `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Effective: ${data.plan_begin_date} &nbsp;·&nbsp; Network: ${data.network || 'In-Network'}</div>`;
+  }
+
+  html += '<hr class="section-rule"/>';
+
+  if (isDental) {
+    // Dental benefits
+    html += '<div class="benefit-grid">';
+    html += benefitCard('Annual Max', fmt(data.annual_maximum), `Used: ${fmt(data.annual_maximum_used)}`);
+    html += benefitCard('Remaining', fmt(data.annual_maximum_remaining), 'Annual balance left');
+    html += benefitCard('Deductible', fmt(data.deductible), `Met: ${fmt(data.deductible_met)}`);
+    html += benefitCard('Ortho Max', fmt(data.ortho_lifetime_max), 'Lifetime');
+    html += '</div>';
+
+    // Annual max progress
+    if (data.annual_maximum && data.annual_maximum_used !== undefined) {
+      const pct = Math.min(100, (data.annual_maximum_used / data.annual_maximum) * 100);
+      html += progressBar('Annual Maximum Used', fmt(data.annual_maximum_used) + ' / ' + fmt(data.annual_maximum), pct, pct > 75 ? 'warning' : '');
+    }
+
+    html += '<hr class="section-rule"/>';
+
+    // Coverage table
+    html += '<table class="benefit-table"><thead><tr><th>Benefit</th><th>Coverage</th></tr></thead><tbody>';
+    html += tableRow('Preventive (cleanings, X-rays)', fmt(data.preventive_coverage, 'pct'));
+    html += tableRow('Basic (fillings, extractions)', fmt(data.basic_coverage, 'pct'));
+    html += tableRow('Major (crowns, root canals)', fmt(data.major_coverage, 'pct'));
+    html += tableRow('Orthodontics', fmt(data.ortho_coverage, 'pct'));
+    html += tableRow('Waiting Period — Basic', data.waiting_period_basic || '—');
+    html += tableRow('Waiting Period — Major', data.waiting_period_major || '—');
+    html += '</tbody></table>';
+
+  } else {
+    // Medical benefits
+    html += '<div class="benefit-grid">';
+    html += benefitCard('Deductible', fmt(data.deductible), `Met: ${fmt(data.deductible_met)}`);
+    html += benefitCard('OOP Max', fmt(data.oop_max), `Met: ${fmt(data.oop_met)}`);
+    html += benefitCard('Copay', fmt(data.copay), 'Per visit');
+    html += benefitCard('Coinsurance', fmt(data.coinsurance, 'pct'), 'After deductible');
+    html += '</div>';
+
+    if (data.deductible && data.deductible_met !== undefined) {
+      const pct = Math.min(100, (data.deductible_met / data.deductible) * 100);
+      html += progressBar('Deductible Progress', fmt(data.deductible_met) + ' / ' + fmt(data.deductible), pct, pct > 75 ? 'warning' : '');
+    }
+    if (data.oop_max && data.oop_met !== undefined) {
+      const pct = Math.min(100, (data.oop_met / data.oop_max) * 100);
+      html += progressBar('Out-of-Pocket Progress', fmt(data.oop_met) + ' / ' + fmt(data.oop_max), pct, 'info');
+    }
+  }
+
+  // Raw JSON toggle
+  html += `<div class="json-toggle" onclick="toggleJson(this)">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    View raw JSON response
+  </div>
+  <div class="json-block" id="json-block">
+    <pre>${JSON.stringify(data, null, 2)}</pre>
+  </div>`;
+
+  el.innerHTML = html;
+
+  // Animate progress bars
+  setTimeout(() => {
+    document.querySelectorAll('.progress-fill').forEach(bar => {
+      const w = bar.getAttribute('data-width');
+      if (w) bar.style.width = w + '%';
+    });
+  }, 50);
+}
+
+function benefitCard(label, value, sub) {
+  return `<div class="benefit-card">
+    <div class="bc-label">${label}</div>
+    <div class="bc-value">${value}</div>
+    <div class="bc-sub">${sub}</div>
+  </div>`;
+}
+
+function progressBar(label, valText, pct, cls='') {
+  return `<div class="progress-row">
+    <div class="progress-header">
+      <span class="ph-label">${label}</span>
+      <span class="ph-val">${valText}</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill ${cls}" style="width:0%" data-width="${pct.toFixed(1)}"></div>
+    </div>
+  </div>`;
+}
+
+function tableRow(label, value) {
+  return `<tr><td>${label}</td><td>${value}</td></tr>`;
+}
+
+function toggleJson(el) {
+  const block = document.getElementById('json-block');
+  block.classList.toggle('open');
+  el.querySelector('svg').style.transform = block.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+
+function renderError(msg) {
+  document.getElementById('empty-state').style.display = 'none';
+  const el = document.getElementById('result-content');
+  el.style.display = 'block';
+  el.innerHTML = `<div class="alert-error"><strong>Error:</strong> ${msg}</div>`;
+}
+
+// Auto-run on load with dental preset
+window.addEventListener('load', () => {
+  loadPreset('dental_delta');
+});
+</script>
+</body>
+</html>
