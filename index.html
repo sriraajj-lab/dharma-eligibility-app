@@ -26,6 +26,8 @@
     --error-bg: #FDECEA; --error-fg: #C4433A;
     --accent: #2D7A5A;
     --accent-light: #4CAF80;
+    --dental-accent: #2D7A5A;
+    --medical-accent: #3E54CE;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -46,11 +48,13 @@
 
   /* ── Hero ── */
   .hero {
-    background: var(--hero-bg);
     padding: 40px 48px 36px;
     position: relative;
     overflow: hidden;
+    transition: background 0.3s;
   }
+  .hero.dental-mode { background: var(--hero-bg); }
+  .hero.medical-mode { background: #DAE3F5; }
   .hero svg.blobs { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .hero-inner { position: relative; z-index: 1; }
   .eyebrow {
@@ -69,6 +73,23 @@
   .hero-stat .val { font-family: 'Noto Serif', serif; font-size: 26px; font-weight: 500; color: var(--text-primary); letter-spacing: -0.02em; }
   .hero-stat .lbl { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 
+  /* ── Mode Toggle ── */
+  .mode-toggle {
+    display: flex; gap: 0; margin: 16px 0 4px; border-radius: 12px;
+    overflow: hidden; border: 1.5px solid var(--border); width: fit-content;
+    background: var(--surface);
+  }
+  .mode-btn {
+    padding: 10px 28px; font-size: 14px; font-weight: 600; font-family: 'Inter Tight', sans-serif;
+    border: none; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+    background: transparent; color: var(--text-secondary);
+  }
+  .mode-btn:hover { background: rgba(0,0,0,0.03); }
+  .mode-btn.active-dental { background: var(--dental-accent); color: #fff; }
+  .mode-btn.active-medical { background: var(--medical-accent); color: #fff; }
+  .mode-btn .mode-icon { font-size: 18px; }
+
   /* ── Main layout ── */
   .main { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
   @media(max-width:768px) { .main { grid-template-columns: 1fr; } body { padding: 0; } .page { border-radius: 0; } .hero { padding: 28px 20px 24px; } }
@@ -81,6 +102,14 @@
   .panel-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
   .section-rule { border: none; border-top: 0.5px solid var(--border); margin: 20px 0; }
 
+  /* ── Section header ── */
+  .section-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .section-header .sh-line { flex: 1; height: 0.5px; background: var(--border); }
+
   /* ── Form ── */
   .form-group { margin-bottom: 14px; }
   label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
@@ -92,24 +121,16 @@
   input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,122,90,0.1); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-  /* ── Payer tabs ── */
-  .payer-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
-  .payer-tab {
-    font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px;
-    border: 0.5px solid var(--border); background: var(--surface); color: var(--text-secondary);
-    cursor: pointer; transition: all 0.15s;
-  }
-  .payer-tab:hover { border-color: var(--accent); color: var(--accent); }
-  .payer-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
   /* ── Submit button ── */
   .btn-submit {
     width: 100%; padding: 12px; font-size: 14px; font-weight: 600; font-family: 'Inter Tight', sans-serif;
-    background: var(--accent); color: #fff; border: none; border-radius: 10px;
+    border: none; border-radius: 10px;
     cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 8px;
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
-  .btn-submit:hover { background: #236648; }
+  .btn-submit.dental { background: var(--dental-accent); color: #fff; }
+  .btn-submit.medical { background: var(--medical-accent); color: #fff; }
+  .btn-submit:hover { opacity: 0.9; }
   .btn-submit:active { transform: scale(0.98); }
   .btn-submit:disabled { background: var(--divider); cursor: not-allowed; }
   .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
@@ -122,6 +143,25 @@
     display: flex; align-items: center; gap: 6px;
   }
   .api-note code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--info-fg); }
+
+  /* ── Presets ── */
+  .preset-label {
+    font-size: 11px; font-weight: 500; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;
+  }
+  .preset-grid { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .preset-btn {
+    font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px;
+    border: 0.5px solid var(--border); background: var(--surface); color: var(--text-secondary);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .preset-btn.active-dental { background: var(--dental-accent); color: #fff; border-color: var(--dental-accent); }
+  .preset-btn.active-medical { background: var(--medical-accent); color: #fff; border-color: var(--medical-accent); }
+
+  /* ── Hidden sections ── */
+  .mode-section { display: none; }
+  .mode-section.visible { display: block; }
 
   /* ── Results panel ── */
   .result-empty {
@@ -159,9 +199,10 @@
   .progress-header .ph-label { color: var(--text-secondary); font-weight: 500; }
   .progress-header .ph-val { color: var(--text-primary); font-weight: 600; }
   .progress-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+  .progress-fill.dental { background: var(--dental-accent); }
+  .progress-fill.medical { background: var(--medical-accent); }
   .progress-fill.warning { background: #E47700; }
-  .progress-fill.info { background: #3E54CE; }
 
   /* ── Coverage type pills ── */
   .coverage-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -170,7 +211,6 @@
   }
   .coverage-pill.dental { background: var(--success-bg); color: var(--success-fg); }
   .coverage-pill.medical { background: var(--info-bg); color: var(--info-fg); }
-  .coverage-pill.stub { background: var(--warning-bg); color: var(--warning-fg); }
   .coverage-pill.demo { background: #F3F0FF; color: #6B4FBB; }
 
   /* ── Benefit table ── */
@@ -214,7 +254,7 @@
 <div class="page">
 
   <!-- Hero -->
-  <div class="hero">
+  <div class="hero dental-mode" id="hero">
     <svg class="blobs" viewBox="0 0 1100 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
       <path d="M80,40 C120,10 180,60 160,100 C140,140 80,130 60,100 C40,70 40,70 80,40Z" fill="#8FC5A8" opacity="0.18"/>
       <path d="M900,20 C950,0 1020,40 1010,90 C1000,140 930,150 890,110 C850,70 850,40 900,20Z" fill="#5FA882" opacity="0.15"/>
@@ -224,11 +264,22 @@
     <div class="hero-inner">
       <div class="eyebrow"><span class="eyebrow-dot"></span>Live Demo · v2.2</div>
       <h1>Insurance Eligibility Verification</h1>
-      <p>Real-time eligibility checks for dental, medical, and COB scenarios. Powered by Stedi 270/271 + pVerify. Demo mode active — no PHI required.</p>
+      <p>Real-time eligibility checks powered by Stedi 270/271 + pVerify. Demo mode active — no PHI required.</p>
+
+      <!-- Mode Toggle -->
+      <div class="mode-toggle">
+        <button class="mode-btn active-dental" id="modeDental" onclick="switchMode('dental')">
+          <span class="mode-icon">🦷</span> Dental
+        </button>
+        <button class="mode-btn" id="modeMedical" onclick="switchMode('medical')">
+          <span class="mode-icon">🏥</span> Medical
+        </button>
+      </div>
+
       <hr class="hero-divider"/>
       <div class="hero-stats">
         <div class="hero-stat"><div class="val">33</div><div class="lbl">Supported Payers</div></div>
-        <div class="hero-stat"><div class="val">3</div><div class="lbl">Coverage Types</div></div>
+        <div class="hero-stat"><div class="val">2</div><div class="lbl">Coverage Types</div></div>
         <div class="hero-stat"><div class="val">&lt;2s</div><div class="lbl">Avg Response Time</div></div>
         <div class="hero-stat"><div class="val">v2.2</div><div class="lbl">Current Version</div></div>
       </div>
@@ -240,32 +291,23 @@
 
     <!-- Left: Input -->
     <div class="panel">
-      <div class="panel-title">Patient Lookup</div>
-      <div class="panel-sub">Enter patient details to check eligibility</div>
+      <div class="panel-title">Patient Information</div>
+      <div class="panel-sub" id="panelSub">Enter dental patient details to check eligibility</div>
 
       <div class="api-note">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#3E54CE" stroke-width="1.2"/><path d="M8 7v5M8 5v1" stroke="#3E54CE" stroke-width="1.4" stroke-linecap="round"/></svg>
         Demo API key: <code>demo-key-2024</code> &nbsp;·&nbsp; DEMO_MODE active
       </div>
 
-      <!-- Payer type tabs -->
-      <div style="margin-bottom:8px;">
-        <label>Coverage Type</label>
-        <div class="payer-tabs">
-          <button class="payer-tab active" data-type="dental" onclick="selectType('dental',this)">🦷 Dental</button>
-          <button class="payer-tab" data-type="medical" onclick="selectType('medical',this)">🏥 Medical</button>
-          <button class="payer-tab" data-type="cob" onclick="selectType('cob',this)">⚖️ COB</button>
-        </div>
-      </div>
-
+      <!-- ── Patient Details (shared) ── -->
       <div class="form-row">
         <div class="form-group">
           <label>First Name</label>
-          <input type="text" id="first_name" value="Jane" placeholder="Jane"/>
+          <input type="text" id="first_name" value="Jane" placeholder="First name"/>
         </div>
         <div class="form-group">
           <label>Last Name</label>
-          <input type="text" id="last_name" value="Doe" placeholder="Doe"/>
+          <input type="text" id="last_name" value="Doe" placeholder="Last name"/>
         </div>
       </div>
 
@@ -276,65 +318,84 @@
         </div>
         <div class="form-group">
           <label>Member ID</label>
-          <input type="text" id="member_id" value="DD-987654" placeholder="DD-987654"/>
+          <input type="text" id="member_id" value="DD-987654" placeholder="Member ID"/>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Payer / Insurance</label>
-        <select id="payer_name" onchange="onPayerChange()">
-          <optgroup label="Dental">
+        <label>Group Number <span style="color:var(--text-secondary);font-weight:400">(optional)</span></label>
+        <input type="text" id="group_number" value="GRP-00123" placeholder="Group number"/>
+      </div>
+
+      <!-- ── DENTAL SECTION ── -->
+      <div class="mode-section visible" id="dentalSection">
+        <div class="section-header"><span class="sh-line"></span>🦷 Dental</div>
+
+        <div class="form-group">
+          <label>Dental Payer</label>
+          <select id="dental_payer">
             <option value="Delta Dental" selected>Delta Dental PPO</option>
             <option value="MetLife Dental">MetLife Dental</option>
+            <option value="Cigna Dental">Cigna Dental</option>
+            <option value="Aetna Dental">Aetna Dental</option>
+            <option value="Guardian Dental">Guardian Dental</option>
             <option value="VSP">VSP Vision</option>
-          </optgroup>
-          <optgroup label="Medical">
-            <option value="Aetna">Aetna</option>
+          </select>
+        </div>
+
+        <div class="preset-label">Dental Presets</div>
+        <div class="preset-grid">
+          <button class="preset-btn active-dental" onclick="loadPreset('dental_delta')">🦷 Delta Dental</button>
+          <button class="preset-btn active-dental" onclick="loadPreset('dental_metlife')">🦷 MetLife Dental</button>
+          <button class="preset-btn active-dental" onclick="loadPreset('dental_cigna')">🦷 Cigna Dental</button>
+          <button class="preset-btn active-dental" onclick="loadPreset('dental_guardian')">🦷 Guardian</button>
+        </div>
+      </div>
+
+      <!-- ── MEDICAL SECTION ── -->
+      <div class="mode-section" id="medicalSection">
+        <div class="section-header"><span class="sh-line"></span>🏥 Medical</div>
+
+        <div class="form-group">
+          <label>Medical Payer</label>
+          <select id="medical_payer">
+            <option value="Aetna" selected>Aetna</option>
             <option value="Cigna">Cigna</option>
             <option value="United Healthcare">United Healthcare</option>
             <option value="Humana">Humana</option>
             <option value="Anthem">Anthem BCBS</option>
-          </optgroup>
-          <optgroup label="Government">
+            <option value="Blue Cross Blue Shield">Blue Cross Blue Shield</option>
             <option value="Medicare">Medicare</option>
             <option value="Medicaid">Medicaid</option>
-            <option value="Tricare">TRICARE</option>
-          </optgroup>
-        </select>
-      </div>
+          </select>
+        </div>
 
-      <div class="form-group" id="group-field">
-        <label>Group Number <span style="color:var(--text-secondary);font-weight:400">(optional)</span></label>
-        <input type="text" id="group_number" value="GRP-00123" placeholder="GRP-00123"/>
+        <div class="preset-label">Medical Presets</div>
+        <div class="preset-grid">
+          <button class="preset-btn active-medical" onclick="loadPreset('medical_aetna')">🏥 Aetna</button>
+          <button class="preset-btn active-medical" onclick="loadPreset('medical_cigna')">🏥 Cigna</button>
+          <button class="preset-btn active-medical" onclick="loadPreset('medical_uhc')">🏥 United Healthcare</button>
+          <button class="preset-btn active-medical" onclick="loadPreset('medicare')">🏥 Medicare</button>
+          <button class="preset-btn active-medical" onclick="loadPreset('medicaid')">🏥 Medicaid</button>
+        </div>
       </div>
 
       <hr class="section-rule"/>
 
-      <button class="btn-submit" id="submitBtn" onclick="runCheck()">
+      <button class="btn-submit dental" id="submitBtn" onclick="runCheck()">
         <span class="spinner" id="spinner"></span>
-        <span id="btnText">Check Eligibility</span>
+        <span id="btnText">Check Dental Eligibility</span>
       </button>
-
-      <!-- Quick presets -->
-      <div style="margin-top:16px;">
-        <div style="font-size:11px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Quick Presets</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="payer-tab" onclick="loadPreset('dental_delta')">Delta Dental</button>
-          <button class="payer-tab" onclick="loadPreset('dental_metlife')">MetLife Dental</button>
-          <button class="payer-tab" onclick="loadPreset('medical_aetna')">Aetna Medical</button>
-          <button class="payer-tab" onclick="loadPreset('medicare')">Medicare</button>
-        </div>
-      </div>
     </div>
 
     <!-- Right: Results -->
     <div class="panel" id="results-panel">
       <div class="panel-title">Eligibility Results</div>
-      <div class="panel-sub">Results will appear here after lookup</div>
+      <div class="panel-sub" id="resultsSub">Run a dental or medical eligibility check to see results</div>
 
       <div class="result-empty" id="empty-state">
         <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#C5C0BA" stroke-width="1.5"/><path d="M20 28h16M28 20v16" stroke="#C5C0BA" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <p>Select a patient and click<br/><strong>Check Eligibility</strong> to see results</p>
+        <p>Select a coverage type above, choose a preset,<br/>and click <strong>Check Eligibility</strong></p>
       </div>
 
       <div id="result-content" style="display:none;"></div>
@@ -366,56 +427,81 @@
 const API_BASE = 'https://dharma-eligibility.vercel.app';
 const API_KEY  = 'demo-key-2024';
 
-let currentType = 'dental';
+let currentMode = 'dental';
 
 const PRESETS = {
-  dental_delta:   { first_name:'Jane', last_name:'Doe',   dob:'1985-03-10', member_id:'DD-987654',  group_number:'GRP-00123', payer:'Delta Dental',  type:'dental'  },
-  dental_metlife: { first_name:'Mark', last_name:'Chen',  dob:'1978-07-22', member_id:'ML-334455',  group_number:'GRP-00456', payer:'MetLife Dental',type:'dental'  },
-  medical_aetna:  { first_name:'John', last_name:'Smith', dob:'1960-05-20', member_id:'AET-555666', group_number:'GRP-00789', payer:'Aetna',         type:'medical' },
-  medicare:       { first_name:'Bob',  last_name:'Jones', dob:'1950-01-15', member_id:'1EG4-TE5-MK72', group_number:'',       payer:'Medicare',      type:'medical' },
+  // ── Dental ──
+  dental_delta:     { fn:'Jane',  ln:'Doe',   dob:'1985-03-10', mid:'DD-987654',  grp:'GRP-00123', payer:'Delta Dental',       mode:'dental' },
+  dental_metlife:   { fn:'Mark',  ln:'Chen',  dob:'1978-07-22', mid:'ML-334455',  grp:'GRP-00456', payer:'MetLife Dental',     mode:'dental' },
+  dental_cigna:     { fn:'Sarah', ln:'Garcia',dob:'1990-11-05', mid:'CG-778899',  grp:'GRP-00234', payer:'Cigna Dental',       mode:'dental' },
+  dental_guardian:  { fn:'Tom',   ln:'Lee',   dob:'1982-04-18', mid:'GW-554433',  grp:'GRP-00890', payer:'Guardian Dental',    mode:'dental' },
+  // ── Medical ──
+  medical_aetna:    { fn:'John',  ln:'Smith', dob:'1960-05-20', mid:'AET-555666', grp:'GRP-00789', payer:'Aetna',              mode:'medical' },
+  medical_cigna:    { fn:'Emily', ln:'Wong',  dob:'1975-09-12', mid:'CG-112233',  grp:'GRP-00567', payer:'Cigna',              mode:'medical' },
+  medical_uhc:      { fn:'Robert',ln:'Brown', dob:'1972-01-30', mid:'UHC-998877', grp:'GRP-00345', payer:'United Healthcare',  mode:'medical' },
+  medicare:         { fn:'Bob',   ln:'Jones', dob:'1950-01-15', mid:'1EG4-TE5-MK72', grp:'',       payer:'Medicare',           mode:'medical' },
+  medicaid:         { fn:'Maria', ln:'Lopez', dob:'1988-07-22', mid:'MCD-445566', grp:'',          payer:'Medicaid',           mode:'medical' },
 };
 
-function selectType(type, el) {
-  currentType = type;
-  document.querySelectorAll('.payer-tab[data-type]').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  // Update payer dropdown to show relevant options
-  const sel = document.getElementById('payer_name');
-  if (type === 'dental') {
-    sel.value = 'Delta Dental';
-    document.getElementById('member_id').value = 'DD-987654';
-  } else if (type === 'medical') {
-    sel.value = 'Aetna';
-    document.getElementById('member_id').value = 'AET-555666';
-  } else if (type === 'cob') {
-    sel.value = 'Aetna';
-    document.getElementById('member_id').value = 'AET-555666';
-  }
-}
+// ── Mode switching ──
 
-function onPayerChange() {
-  const payer = document.getElementById('payer_name').value.toLowerCase();
-  if (payer.includes('dental') || payer.includes('vsp')) {
-    currentType = 'dental';
-    document.querySelectorAll('.payer-tab[data-type]').forEach(t => t.classList.remove('active'));
-    document.querySelector('.payer-tab[data-type="dental"]').classList.add('active');
-  }
+function switchMode(mode) {
+  currentMode = mode;
+
+  // Toggle hero style
+  const hero = document.getElementById('hero');
+  hero.classList.remove('dental-mode', 'medical-mode');
+  hero.classList.add(mode + '-mode');
+
+  // Toggle mode buttons
+  document.getElementById('modeDental').className = 'mode-btn' + (mode === 'dental' ? ' active-dental' : '');
+  document.getElementById('modeMedical').className = 'mode-btn' + (mode === 'medical' ? ' active-medical' : '');
+
+  // Toggle sections
+  document.getElementById('dentalSection').className = 'mode-section' + (mode === 'dental' ? ' visible' : '');
+  document.getElementById('medicalSection').className = 'mode-section' + (mode === 'medical' ? ' visible' : '');
+
+  // Update button
+  const btn = document.getElementById('submitBtn');
+  btn.className = 'btn-submit ' + mode;
+  document.getElementById('btnText').textContent = mode === 'dental' ? 'Check Dental Eligibility' : 'Check Medical Eligibility';
+
+  // Update panel sub
+  document.getElementById('panelSub').textContent = mode === 'dental'
+    ? 'Enter patient details and select a dental plan'
+    : 'Enter patient details and select a medical plan';
+  document.getElementById('resultsSub').textContent = mode === 'dental'
+    ? 'Dental eligibility results will appear here'
+    : 'Medical eligibility results will appear here';
+
+  // Clear previous results
+  document.getElementById('result-content').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'flex';
+
+  // Load default preset for this mode
+  if (mode === 'dental') loadPreset('dental_delta');
+  else loadPreset('medical_aetna');
 }
 
 function loadPreset(key) {
   const p = PRESETS[key];
   if (!p) return;
-  document.getElementById('first_name').value   = p.first_name;
-  document.getElementById('last_name').value    = p.last_name;
+  document.getElementById('first_name').value   = p.fn;
+  document.getElementById('last_name').value    = p.ln;
   document.getElementById('dob').value          = p.dob;
-  document.getElementById('member_id').value    = p.member_id;
-  document.getElementById('group_number').value = p.group_number;
-  document.getElementById('payer_name').value   = p.payer;
-  currentType = p.type;
-  document.querySelectorAll('.payer-tab[data-type]').forEach(t => t.classList.remove('active'));
-  const tab = document.querySelector(`.payer-tab[data-type="${p.type}"]`);
-  if (tab) tab.classList.add('active');
+  document.getElementById('member_id').value    = p.mid;
+  document.getElementById('group_number').value = p.grp;
+
+  if (p.mode === 'dental') {
+    document.getElementById('dental_payer').value = p.payer;
+    if (currentMode !== 'dental') switchMode('dental');
+  } else {
+    document.getElementById('medical_payer').value = p.payer;
+    if (currentMode !== 'medical') switchMode('medical');
+  }
 }
+
+// ── API call ──
 
 async function runCheck() {
   const btn = document.getElementById('submitBtn');
@@ -426,8 +512,10 @@ async function runCheck() {
   spinner.style.display = 'block';
   btnText.textContent = 'Checking…';
 
-  const payer = document.getElementById('payer_name').value;
-  const isDental = currentType === 'dental' || payer.toLowerCase().includes('dental') || payer.toLowerCase().includes('vsp');
+  const isDental = currentMode === 'dental';
+  const payer = isDental
+    ? document.getElementById('dental_payer').value
+    : document.getElementById('medical_payer').value;
 
   const body = {
     first_name:   document.getElementById('first_name').value,
@@ -448,15 +536,18 @@ async function runCheck() {
       body: JSON.stringify(body)
     });
     const data = await res.json();
-    renderResult(data, body);
+    if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
+    renderResult(data, isDental);
   } catch(e) {
     renderError(e.message);
   } finally {
     btn.disabled = false;
     spinner.style.display = 'none';
-    btnText.textContent = 'Check Eligibility';
+    btnText.textContent = isDental ? 'Check Dental Eligibility' : 'Check Medical Eligibility';
   }
 }
+
+// ── Rendering ──
 
 function fmt(val, type='currency') {
   if (val === null || val === undefined) return '—';
@@ -465,18 +556,23 @@ function fmt(val, type='currency') {
   return val;
 }
 
-function renderResult(data, req) {
+function renderResult(data, isDental) {
   document.getElementById('empty-state').style.display = 'none';
   const el = document.getElementById('result-content');
   el.style.display = 'block';
 
-  const isDental  = data.active_dental || data.plan_type === 'dental';
-  const isMedical = data.active_medical;
-  const isActive  = data.active;
-  const isDemo    = data._demo;
-  const isStub    = data._stub;
+  const isActive = data.active;
+  const isDemo   = data._demo;
 
   let html = '';
+
+  // Mode header
+  html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+    <span style="font-size:18px;">${isDental ? '🦷' : '🏥'}</span>
+    <span style="font-size:15px;font-weight:600;color:var(--text-primary);">
+      ${isDental ? 'Dental' : 'Medical'} Eligibility
+    </span>
+  </div>`;
 
   // Status badge
   html += `<div class="status-badge ${isActive ? 'active' : 'inactive'}">
@@ -486,10 +582,8 @@ function renderResult(data, req) {
 
   // Pills
   html += '<div class="coverage-pills">';
-  if (isDental)  html += '<span class="coverage-pill dental">🦷 Dental</span>';
-  if (isMedical) html += '<span class="coverage-pill medical">🏥 Medical</span>';
-  if (isDemo)    html += '<span class="coverage-pill demo">Demo Mode</span>';
-  if (isStub)    html += '<span class="coverage-pill stub">⚠ Stub</span>';
+  html += `<span class="coverage-pill ${isDental ? 'dental' : 'medical'}">${isDental ? '🦷 Dental' : '🏥 Medical'}</span>`;
+  if (isDemo) html += '<span class="coverage-pill demo">Demo Mode</span>';
   html += '</div>';
 
   // Plan name
@@ -497,13 +591,14 @@ function renderResult(data, req) {
     html += `<div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">${data.plan_name}</div>`;
   }
   if (data.plan_begin_date) {
-    html += `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Effective: ${data.plan_begin_date} &nbsp;·&nbsp; Network: ${data.network || 'In-Network'}</div>`;
+    html += `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Effective: ${data.plan_begin_date}</div>`;
   }
 
   html += '<hr class="section-rule"/>';
 
   if (isDental) {
-    // Dental benefits
+    // ── DENTAL RESULTS ──
+    html += '<div style="font-size:13px;font-weight:600;color:var(--dental-accent);margin-bottom:12px;">DENTAL BENEFITS</div>';
     html += '<div class="benefit-grid">';
     html += benefitCard('Annual Max', fmt(data.annual_maximum), `Used: ${fmt(data.annual_maximum_used)}`);
     html += benefitCard('Remaining', fmt(data.annual_maximum_remaining), 'Annual balance left');
@@ -511,26 +606,24 @@ function renderResult(data, req) {
     html += benefitCard('Ortho Max', fmt(data.ortho_lifetime_max), 'Lifetime');
     html += '</div>';
 
-    // Annual max progress
     if (data.annual_maximum && data.annual_maximum_used !== undefined) {
       const pct = Math.min(100, (data.annual_maximum_used / data.annual_maximum) * 100);
-      html += progressBar('Annual Maximum Used', fmt(data.annual_maximum_used) + ' / ' + fmt(data.annual_maximum), pct, pct > 75 ? 'warning' : '');
+      html += progressBar('Annual Maximum Used', fmt(data.annual_maximum_used) + ' / ' + fmt(data.annual_maximum), pct, pct > 75 ? 'warning' : 'dental');
     }
 
     html += '<hr class="section-rule"/>';
-
-    // Coverage table
-    html += '<table class="benefit-table"><thead><tr><th>Benefit</th><th>Coverage</th></tr></thead><tbody>';
+    html += '<table class="benefit-table"><thead><tr><th>Dental Benefit</th><th>Coverage</th></tr></thead><tbody>';
     html += tableRow('Preventive (cleanings, X-rays)', fmt(data.preventive_coverage, 'pct'));
     html += tableRow('Basic (fillings, extractions)', fmt(data.basic_coverage, 'pct'));
     html += tableRow('Major (crowns, root canals)', fmt(data.major_coverage, 'pct'));
     html += tableRow('Orthodontics', fmt(data.ortho_coverage, 'pct'));
-    html += tableRow('Waiting Period — Basic', data.waiting_period_basic || '—');
-    html += tableRow('Waiting Period — Major', data.waiting_period_major || '—');
+    html += tableRow('Waiting Period — Basic', data.waiting_period_basic || 'None');
+    html += tableRow('Waiting Period — Major', data.waiting_period_major || 'None');
     html += '</tbody></table>';
 
   } else {
-    // Medical benefits
+    // ── MEDICAL RESULTS ──
+    html += '<div style="font-size:13px;font-weight:600;color:var(--medical-accent);margin-bottom:12px;">MEDICAL BENEFITS</div>';
     html += '<div class="benefit-grid">';
     html += benefitCard('Deductible', fmt(data.deductible), `Met: ${fmt(data.deductible_met)}`);
     html += benefitCard('OOP Max', fmt(data.oop_max), `Met: ${fmt(data.oop_met)}`);
@@ -540,11 +633,11 @@ function renderResult(data, req) {
 
     if (data.deductible && data.deductible_met !== undefined) {
       const pct = Math.min(100, (data.deductible_met / data.deductible) * 100);
-      html += progressBar('Deductible Progress', fmt(data.deductible_met) + ' / ' + fmt(data.deductible), pct, pct > 75 ? 'warning' : '');
+      html += progressBar('Deductible Progress', fmt(data.deductible_met) + ' / ' + fmt(data.deductible), pct, pct > 75 ? 'warning' : 'medical');
     }
     if (data.oop_max && data.oop_met !== undefined) {
       const pct = Math.min(100, (data.oop_met / data.oop_max) * 100);
-      html += progressBar('Out-of-Pocket Progress', fmt(data.oop_met) + ' / ' + fmt(data.oop_max), pct, 'info');
+      html += progressBar('Out-of-Pocket Progress', fmt(data.oop_met) + ' / ' + fmt(data.oop_max), pct, 'medical');
     }
   }
 
@@ -605,10 +698,8 @@ function renderError(msg) {
   el.innerHTML = `<div class="alert-error"><strong>Error:</strong> ${msg}</div>`;
 }
 
-// Auto-run on load with dental preset
-window.addEventListener('load', () => {
-  loadPreset('dental_delta');
-});
+// ── Init ──
+window.addEventListener('load', () => switchMode('dental'));
 </script>
 </body>
 </html>
