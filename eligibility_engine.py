@@ -557,7 +557,20 @@ def resolve_patient(patient: dict, coverages: list = None) -> dict:
     )
 
     if is_dental:
-        result = checkDentalEligibility(patient)
+        # Inject payer_name + member_id from the first dental coverage into patient dict
+        # so _demo_dental() can use them for payer-specific profiles.
+        dental_coverage = next(
+            (c for c in coverages if c.get("plan_type") == "dental"),
+            coverages[0] if coverages else {}
+        )
+        patient_with_payer = dict(patient)
+        if not patient_with_payer.get("payer_name") and dental_coverage.get("payer_name"):
+            patient_with_payer["payer_name"] = dental_coverage["payer_name"]
+        if not patient_with_payer.get("member_id") and dental_coverage.get("member_id"):
+            patient_with_payer["member_id"] = dental_coverage["member_id"]
+        if not patient_with_payer.get("group_number") and dental_coverage.get("group_number"):
+            patient_with_payer["group_number"] = dental_coverage["group_number"]
+        result = checkDentalEligibility(patient_with_payer)
         result["active_dental"]  = result.get("active", False)
         result["active_medical"] = False
         return result
