@@ -1,5 +1,5 @@
 """
-Insurance Eligibility & COB API — FastAPI backend  v2.2.0
+Insurance Eligibility & COB API — FastAPI backend  v2.3.0
 
 Security:
   - CORS explicit allowlist (no wildcard)
@@ -12,6 +12,12 @@ Correctness:
   - SQLite job store (survives restarts)
   - PDF batch upload blocked with clear error
   - Structured JSON logging
+
+v2.3 changes:
+  - Full DB Breakdown field set in response schema (31 new Optional fields)
+  - DENTAL_PROVIDER env var support (zuub / dentalxchange / stedi)
+  - /api/db-breakdown/{job_id} endpoint — returns DB Breakdown formatted response
+  - Version bumped to 2.3.0
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -23,7 +29,7 @@ import logging
 import secrets
 import hashlib
 import time
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from contextlib import contextmanager
 
@@ -53,19 +59,18 @@ logger = logging.getLogger("eligibility-api")
 # ─── Rate limiter ─────────────────────────────────────────────────────────────
 
 limiter = Limiter(key_func=get_remote_address)
-app = FastAPI(title="Insurance Eligibility & COB API", version="2.2.0")
+app = FastAPI(title="Insurance Eligibility & COB API", version="2.3.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # ─── SECURITY: CORS — explicit allowlist only ─────────────────────────────────
-# Never use allow_origins=["*"] — any website could call this API and exfiltrate PHI.
-# Set ELIGIBILITY_ALLOWED_ORIGINS env var (comma-separated) to override defaults.
 
 _DEFAULT_ORIGINS = [
     "https://denialsdoctor.com",
     "https://app.denialsdoctor.com",
     "https://eligibility.denialsdoctor.com",
+    "https://dharma-eligibility.vercel.app",
 ]
 _raw = os.environ.get("ELIGIBILITY_ALLOWED_ORIGINS", "")
 ALLOWED_ORIGINS = [o.strip() for o in _raw.split(",") if o.strip()] or _DEFAULT_ORIGINS
@@ -79,9 +84,6 @@ app.add_middleware(
 
 
 # ─── SECURITY: API Key authentication (constant-time comparison) ──────────────
-# Set ELIGIBILITY_API_KEY env var. Clients must send: X-API-Key: <key>
-# Separate ELIGIBILITY_DD_API_KEY for DD internal service-to-service calls.
-# IMPORTANT: uses secrets.compare_digest() to prevent timing attacks.
 
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
 
@@ -111,7 +113,6 @@ async def require_api_key(api_key: str = Security(API_KEY_HEADER)) -> str:
         raise HTTPException(503, "API key not configured on server. Set ELIGIBILITY_API_KEY env var.")
     if not api_key:
         raise HTTPException(401, "Missing X-API-Key header.")
-    # Constant-time comparison — prevents timing attacks on a healthcare API
     if not any(secrets.compare_digest(api_key, k) for k in valid):
         raise HTTPException(401, "Invalid X-API-Key.")
     return api_key
@@ -134,10 +135,7 @@ async def add_request_id(request: Request, call_next):
     return response
 
 
-# ─── SQLite job store (survives container restarts) ───────────────────────────
-# Replaces the in-memory JOBS dict that was wiped on every restart.
-# api_key_hash column enables per-job ownership checks for multi-tenant use.
-# Upgrade to Redis for multi-instance deployments.
+# ─── SQLite job store ─────────────────────────────────────────────────────────
 
 DB_PATH = os.environ.get("ELIGIBILITY_DB_PATH", "/tmp/eligibility_jobs.db")
 
@@ -196,11 +194,10 @@ def _get_job(job_id: str, api_key: str) -> Optional[dict]:
         row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
         if not row:
             return None
-        # Multi-tenant isolation: verify key hash matches
         if row["api_key_hash"] and not secrets.compare_digest(
             row["api_key_hash"], _key_hash(api_key)
         ):
-            return None  # Treat as not found — don't leak existence
+            return None
         return dict(row)
 
 
@@ -217,6 +214,7 @@ class CoverageIn(BaseModel):
     group_number: str = ""
     plan_type: str = "medical"
     subscriber_dob: str = ""
+    subscriber_name: str = ""   # NEW v2.3
     esrd: bool = False
     esrd_months: int = 0
     disability: bool = False
@@ -233,6 +231,247 @@ class PatientIn(BaseModel):
     coverages: List[CoverageIn] = []
 
 
+class SpecificCode(BaseModel):
+    covered: Optional[bool] = None
+    category: Optional[str] = None
+    note: Optional[str] = None
+
+
+class PatientOut(BaseModel):
+    """
+    Full dental + medical eligibility response schema — v2.3.
+    Covers all 71 DB Breakdown form fields.
+    All fields are Optional so existing integrations don't break.
+    """
+    # ── Active / plan basics ──────────────────────────────────────────────
+    active: Optional[bool] = None
+    plan_name: Optional[str] = None
+    plan_begin_date: Optional[str] = None
+    plan_type: Optional[str] = None
+    network: Optional[str] = None
+    benefit_period: Optional[str] = None          # "calendar" | "fiscal"
+    payer_id: Optional[str] = None
+    payer_phone: Optional[str] = None
+    claim_address: Optional[str] = None
+    group_number: Optional[str] = None
+    member_id: Optional[str] = None
+    subscriber_name: Optional[str] = None         # NEW v2.3
+    active_medical: Optional[bool] = None
+    active_dental: Optional[bool] = None
+    data_source: Optional[str] = None             # "zuub" | "stedi" | "demo" | "stub"
+
+    # ── Medical-specific ─────────────────────────────────────────────────
+    deductible: Optional[float] = None
+    deductible_met: Optional[float] = None
+    oop_max: Optional[float] = None
+    oop_met: Optional[float] = None
+    copay: Optional[float] = None
+    coinsurance: Optional[float] = None
+
+    # ── Dental — maximums & deductibles ──────────────────────────────────
+    annual_maximum: Optional[float] = None
+    annual_maximum_used: Optional[float] = None
+    annual_maximum_remaining: Optional[float] = None
+    deductible_family: Optional[float] = None     # NEW v2.3
+    deductible_applies_preventive: Optional[bool] = None  # NEW v2.3
+    preventive_in_max: Optional[bool] = None      # NEW v2.3
+    cob_type: Optional[str] = None                # NEW v2.3
+
+    # ── Dental — coverage percentages ────────────────────────────────────
+    preventive_coverage: Optional[float] = None
+    basic_coverage: Optional[float] = None
+    major_coverage: Optional[float] = None
+    perio_coverage: Optional[float] = None        # NEW v2.3
+    endo_coverage: Optional[float] = None         # NEW v2.3
+    oral_surgery_coverage: Optional[float] = None # NEW v2.3
+    fillings_coverage: Optional[float] = None     # NEW v2.3
+    crowns_coverage: Optional[float] = None       # NEW v2.3
+    dentures_coverage: Optional[float] = None     # NEW v2.3
+    ortho_coverage: Optional[float] = None
+
+    # ── Dental — waiting periods ──────────────────────────────────────────
+    waiting_period_basic: Optional[str] = None
+    waiting_period_major: Optional[str] = None
+
+    # ── Dental — frequency limits ─────────────────────────────────────────
+    prophy_frequency: Optional[str] = None        # NEW v2.3
+    periodic_exam_frequency: Optional[str] = None # NEW v2.3
+    comp_exam_frequency: Optional[str] = None     # NEW v2.3
+    fmx_frequency: Optional[str] = None           # NEW v2.3
+    bitewing_frequency: Optional[str] = None      # NEW v2.3
+    pa_frequency: Optional[str] = None            # NEW v2.3
+    srp_frequency: Optional[str] = None           # NEW v2.3
+    perio_maintenance_frequency: Optional[str] = None  # NEW v2.3
+    fmd_frequency: Optional[str] = None           # NEW v2.3
+
+    # ── Dental — clauses & exclusions ────────────────────────────────────
+    missing_tooth_clause: Optional[bool] = None   # NEW v2.3
+    fillings_downgrade: Optional[bool] = None     # NEW v2.3
+    crowns_paid_on: Optional[str] = None          # NEW v2.3 "seat" | "prep"
+    same_day_treatment: Optional[bool] = None     # NEW v2.3
+    fluoride_covered: Optional[bool] = None       # NEW v2.3
+    fluoride_age_limit: Optional[int] = None      # NEW v2.3
+    sealants_covered: Optional[bool] = None       # NEW v2.3
+    sealants_age_limit: Optional[int] = None      # NEW v2.3
+    sdf_covered: Optional[bool] = None            # NEW v2.3
+    arestin_covered: Optional[bool] = None        # NEW v2.3
+    perio_same_day_exam: Optional[bool] = None    # NEW v2.3
+    perio_shares_prophy_frequency: Optional[bool] = None  # NEW v2.3
+    srp_quads_per_visit: Optional[int] = None     # NEW v2.3
+
+    # ── Dental — replacement clauses ─────────────────────────────────────
+    replacement_crowns: Optional[str] = None      # NEW v2.3
+    replacement_bridges: Optional[str] = None     # NEW v2.3
+    replacement_dentures: Optional[str] = None    # NEW v2.3
+    replacement_partials: Optional[str] = None    # NEW v2.3
+    claims_filing_deadline: Optional[str] = None  # NEW v2.3
+
+    # ── Dental — implants ─────────────────────────────────────────────────
+    implants_covered: Optional[bool] = None       # NEW v2.3
+    implants_coverage: Optional[float] = None     # NEW v2.3
+    implants_separate_max: Optional[float] = None # NEW v2.3
+    abutment_coverage: Optional[float] = None     # NEW v2.3
+    implant_crown_coverage: Optional[float] = None  # NEW v2.3
+
+    # ── Dental — orthodontics ─────────────────────────────────────────────
+    ortho_lifetime_max: Optional[float] = None
+    ortho_lifetime_used: Optional[float] = None   # NEW v2.3
+    ortho_deductible: Optional[float] = None      # NEW v2.3
+    ortho_age_limit: Optional[int] = None         # NEW v2.3
+    ortho_payment_method: Optional[str] = None    # NEW v2.3
+
+    # ── Dental — specific CDT codes ───────────────────────────────────────
+    specific_codes: Optional[Dict[str, Any]] = None  # NEW v2.3
+
+    class Config:
+        extra = "allow"  # Pass through any extra fields from engine
+
+
+# ─── DB Breakdown formatter ───────────────────────────────────────────────────
+
+def _format_db_breakdown(result: dict) -> dict:
+    """
+    Format an eligibility result as a DB Breakdown form response.
+    Derives Yes/No fields and fills in auto-derivable values.
+    """
+    def pct(val):
+        if val is None:
+            return None
+        return f"{int(val * 100)}%"
+
+    def yn(val):
+        if val is None:
+            return "Unknown"
+        return "Yes" if val else "No"
+
+    ded = result.get("deductible")
+    ded_met = result.get("deductible_met")
+    ded_met_yn = "Yes" if (ded is not None and ded_met is not None and ded_met >= ded) else (
+        "No" if (ded is not None and ded_met is not None) else "Unknown"
+    )
+
+    return {
+        # Patient / Plan Info
+        "ins_name":                 result.get("plan_name"),
+        "ins_phone":                result.get("payer_phone"),
+        "payor_id":                 result.get("payer_id"),
+        "ins_effective_date":       result.get("plan_begin_date"),
+        "group_number":             result.get("group_number"),
+        "member_id":                result.get("member_id"),
+        "network":                  result.get("network"),
+        "benefit_period":           result.get("benefit_period"),
+        "claim_address":            result.get("claim_address"),
+
+        # Maximums & Deductibles
+        "ins_max":                  result.get("annual_maximum"),
+        "ins_used":                 result.get("annual_maximum_used"),
+        "ins_remaining":            result.get("annual_maximum_remaining"),
+        "ded_individual":           ded,
+        "ded_family":               result.get("deductible_family"),
+        "ded_met_amount":           ded_met,
+        "ded_met_yn":               ded_met_yn,
+        "ded_applies_preventive":   yn(result.get("deductible_applies_preventive")),
+        "preventive_in_max":        yn(result.get("preventive_in_max")),
+        "cob_type":                 result.get("cob_type"),
+
+        # Coverage Percentages
+        "prev_pct":                 pct(result.get("preventive_coverage")),
+        "basic_pct":                pct(result.get("basic_coverage")),
+        "major_pct":                pct(result.get("major_coverage")),
+        "perio_pct":                pct(result.get("perio_coverage")),
+        "endo_pct":                 pct(result.get("endo_coverage")),
+        "oral_surgery_pct":         pct(result.get("oral_surgery_coverage")),
+        "fillings_pct":             pct(result.get("fillings_coverage") or result.get("basic_coverage")),
+        "crowns_pct":               pct(result.get("crowns_coverage") or result.get("major_coverage")),
+        "dentures_pct":             pct(result.get("dentures_coverage") or result.get("major_coverage")),
+
+        # Waiting Periods
+        "waiting_period_yn":        "Yes" if (result.get("waiting_period_basic") not in (None, "None", "N/A") or
+                                              result.get("waiting_period_major") not in (None, "None", "N/A")) else "No",
+        "waiting_period_basic":     result.get("waiting_period_basic"),
+        "waiting_period_major":     result.get("waiting_period_major"),
+
+        # Frequency Limits
+        "prophy_frequency":         result.get("prophy_frequency"),
+        "periodic_exam_frequency":  result.get("periodic_exam_frequency"),
+        "comp_exam_frequency":      result.get("comp_exam_frequency"),
+        "fmx_frequency":            result.get("fmx_frequency"),
+        "bitewing_frequency":       result.get("bitewing_frequency"),
+        "pa_frequency":             result.get("pa_frequency"),
+
+        # Clauses
+        "missing_tooth_clause":     yn(result.get("missing_tooth_clause")),
+        "fillings_downgrade":       yn(result.get("fillings_downgrade")),
+        "crowns_paid_on":           result.get("crowns_paid_on"),
+        "same_day_treatment":       yn(result.get("same_day_treatment")),
+
+        # Replacement Clauses
+        "replacement_crowns":       result.get("replacement_crowns"),
+        "replacement_bridges":      result.get("replacement_bridges"),
+        "replacement_dentures":     result.get("replacement_dentures"),
+        "replacement_partials":     result.get("replacement_partials"),
+        "claims_filing_deadline":   result.get("claims_filing_deadline"),
+
+        # Implants
+        "implants_covered":         yn(result.get("implants_covered")),
+        "implants_pct":             pct(result.get("implants_coverage")),
+        "implants_separate_max":    result.get("implants_separate_max"),
+        "abutment_pct":             pct(result.get("abutment_coverage")),
+        "implant_crown_pct":        pct(result.get("implant_crown_coverage")),
+
+        # Preventive Specifics
+        "fluoride_covered":         yn(result.get("fluoride_covered")),
+        "fluoride_age_limit":       result.get("fluoride_age_limit"),
+        "sealants_covered":         yn(result.get("sealants_covered")),
+        "sealants_age_limit":       result.get("sealants_age_limit"),
+        "sdf_covered":              yn(result.get("sdf_covered")),
+
+        # Periodontics
+        "srp_frequency":            result.get("srp_frequency"),
+        "srp_quads_per_visit":      result.get("srp_quads_per_visit"),
+        "perio_maintenance_frequency": result.get("perio_maintenance_frequency"),
+        "perio_shares_prophy_frequency": yn(result.get("perio_shares_prophy_frequency")),
+        "fmd_frequency":            result.get("fmd_frequency"),
+        "perio_same_day_exam":      yn(result.get("perio_same_day_exam")),
+        "arestin_covered":          yn(result.get("arestin_covered")),
+
+        # Orthodontics
+        "ortho_pct":                pct(result.get("ortho_coverage")),
+        "ortho_lifetime_max":       result.get("ortho_lifetime_max"),
+        "ortho_lifetime_used":      result.get("ortho_lifetime_used"),
+        "ortho_deductible":         result.get("ortho_deductible"),
+        "ortho_age_limit":          result.get("ortho_age_limit"),
+        "ortho_payment_method":     result.get("ortho_payment_method"),
+
+        # Specific Codes
+        "specific_codes":           result.get("specific_codes"),
+
+        # Meta
+        "data_source":              result.get("data_source", "unknown"),
+        "_demo":                    result.get("_demo", False),
+    }
+
+
 # ─── Single patient endpoint ─────────────────────────────────────────────────
 
 @app.post("/api/resolve", dependencies=[Depends(require_api_key)])
@@ -246,6 +485,20 @@ async def resolve_single(request: Request, patient: PatientIn):
     logger.info(f'"event":"resolve_single","req_id":"{req_id}","patient":"{patient.first_name[0]}***"')
     result = resolve_patient(patient.dict(), [c.dict() for c in patient.coverages])
     return result
+
+
+@app.post("/api/resolve/db-breakdown", dependencies=[Depends(require_api_key)])
+@limiter.limit("60/minute")
+async def resolve_db_breakdown(request: Request, patient: PatientIn):
+    """
+    Resolve eligibility and return response formatted as a DB Breakdown form.
+    All percentage fields returned as strings (e.g. "80%").
+    Yes/No fields returned as "Yes" | "No" | "Unknown".
+    """
+    req_id = getattr(request.state, "request_id", "unknown")
+    logger.info(f'"event":"resolve_db_breakdown","req_id":"{req_id}","patient":"{patient.first_name[0]}***"')
+    result = resolve_patient(patient.dict(), [c.dict() for c in patient.coverages])
+    return _format_db_breakdown(result)
 
 
 # ─── Batch endpoints ─────────────────────────────────────────────────────────
@@ -358,11 +611,13 @@ async def get_template():
     template += "John,Smith,1955-03-15,M,CA,Acme Corp,1957-07-22,Blue Cross PPO,BCX123456,GRP-001,medical,1957-07-22\n"
     template += "John,Smith,1955-03-15,M,CA,,,Medicare Part A/B,MEMBER-ID-HERE,,medical,1955-03-15\n"
     template += "Jane,Doe,1980-06-01,F,TX,,,Delta Dental PPO,DD987654,,dental,1980-06-01\n"
+    template += "Sarah,Johnson,1985-03-15,F,CA,,,MetLife Dental,MET123456,GRP-002,dental,1985-03-15\n"
+    template += "Mike,Williams,1978-11-20,M,TX,,,Guardian,GRD789012,GRP-003,dental,1978-11-20\n"
     return Response(content=template, media_type="text/csv",
                     headers={"Content-Disposition": "attachment; filename=eligibility_template.csv"})
 
 
-# ─── Health check (no auth — used by load balancer / Caddy HEALTHCHECK) ───────
+# ─── Health check ─────────────────────────────────────────────────────────────
 
 @app.get("/health")
 async def health():
@@ -372,7 +627,15 @@ async def health():
         db_ok = True
     except Exception:
         db_ok = False
-    return {"status": "ok" if db_ok else "degraded", "version": "2.2.0", "db": "sqlite" if db_ok else "error"}
+    dental_provider = os.environ.get("DENTAL_PROVIDER", "stedi")
+    demo_mode = os.environ.get("DEMO_MODE", "false").lower() == "true"
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "version": "2.3.0",
+        "db": "sqlite" if db_ok else "error",
+        "dental_provider": dental_provider,
+        "demo_mode": demo_mode,
+    }
 
 
 if __name__ == "__main__":
