@@ -36,7 +36,7 @@
     color: var(--text-body);
   }
   .page {
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
     background: var(--page-bg);
     border-radius: 24px;
@@ -62,38 +62,54 @@
   .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-light); animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
   .hero h1 { font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1.2; margin-bottom: 8px; }
-  .hero p { font-size: 14px; color: var(--text-secondary); max-width: 560px; line-height: 1.6; }
+  .hero p { font-size: 14px; color: var(--text-secondary); max-width: 640px; line-height: 1.6; }
   .hero-divider { border: none; border-top: 0.5px solid rgba(255,255,255,0.6); margin: 20px 0; }
   .hero-stats { display: flex; gap: 32px; flex-wrap: wrap; }
-  .hero-stat { }
   .hero-stat .val { font-family: 'Noto Serif', serif; font-size: 26px; font-weight: 500; color: var(--text-primary); letter-spacing: -0.02em; }
   .hero-stat .lbl { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 
+  /* ── View tabs ── */
+  .view-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid var(--border);
+    background: var(--surface); padding: 0 48px;
+  }
+  .view-tab {
+    font-size: 13px; font-weight: 500; padding: 14px 20px;
+    border: none; background: none; color: var(--text-secondary);
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .view-tab:hover { color: var(--text-primary); }
+  .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .view-panel { display: none; }
+  .view-panel.active { display: block; }
+
   /* ── Main layout ── */
-  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-  @media(max-width:768px) { .main { grid-template-columns: 1fr; } body { padding: 0; } .page { border-radius: 0; } .hero { padding: 28px 20px 24px; } }
+  .main { display: grid; grid-template-columns: 380px 1fr; gap: 0; }
+  @media(max-width:900px) { .main { grid-template-columns: 1fr; } body { padding: 0; } .page { border-radius: 0; } .hero { padding: 28px 20px 24px; } .view-tabs { padding: 0 20px; } }
 
   /* ── Panel ── */
-  .panel { padding: 32px 36px; }
+  .panel { padding: 28px 32px; }
   .panel + .panel { border-left: 0.5px solid var(--border); }
-  @media(max-width:768px) { .panel + .panel { border-left: none; border-top: 0.5px solid var(--border); } .panel { padding: 24px 20px; } }
-  .panel-title { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-  .panel-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
-  .section-rule { border: none; border-top: 0.5px solid var(--border); margin: 20px 0; }
+  @media(max-width:900px) { .panel + .panel { border-left: none; border-top: 0.5px solid var(--border); } .panel { padding: 20px; } }
+  .panel-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+  .panel-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; }
+  .section-rule { border: none; border-top: 0.5px solid var(--border); margin: 16px 0; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; margin-top: 16px; }
 
   /* ── Form ── */
-  .form-group { margin-bottom: 14px; }
-  label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
+  .form-group { margin-bottom: 12px; }
+  label { display: block; font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; letter-spacing: 0.02em; text-transform: uppercase; }
   input, select {
-    width: 100%; padding: 9px 12px; font-size: 14px; font-family: 'Inter Tight', sans-serif;
+    width: 100%; padding: 8px 11px; font-size: 13px; font-family: 'Inter Tight', sans-serif;
     border: 0.5px solid var(--border); border-radius: 8px; background: var(--surface);
     color: var(--text-primary); outline: none; transition: border-color 0.15s, box-shadow 0.15s;
   }
   input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,122,90,0.1); }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
   /* ── Payer tabs ── */
-  .payer-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .payer-tabs { display: flex; gap: 5px; margin-bottom: 14px; flex-wrap: wrap; }
   .payer-tab {
     font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px;
     border: 0.5px solid var(--border); background: var(--surface); color: var(--text-secondary);
@@ -104,38 +120,29 @@
 
   /* ── Submit button ── */
   .btn-submit {
-    width: 100%; padding: 12px; font-size: 14px; font-weight: 600; font-family: 'Inter Tight', sans-serif;
+    width: 100%; padding: 11px; font-size: 14px; font-weight: 600; font-family: 'Inter Tight', sans-serif;
     background: var(--accent); color: #fff; border: none; border-radius: 10px;
-    cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 8px;
+    cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 6px;
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
   .btn-submit:hover { background: #236648; }
   .btn-submit:active { transform: scale(0.98); }
   .btn-submit:disabled { background: var(--divider); cursor: not-allowed; }
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+  .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ── API key note ── */
   .api-note {
     font-size: 12px; color: var(--text-secondary); background: var(--info-bg);
-    border-radius: 8px; padding: 8px 12px; margin-bottom: 16px;
+    border-radius: 8px; padding: 8px 12px; margin-bottom: 14px;
     display: flex; align-items: center; gap: 6px;
   }
   .api-note code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--info-fg); }
 
-  /* ── Results panel ── */
-  .result-empty {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 300px; color: var(--text-secondary); text-align: center; gap: 12px;
-  }
-  .result-empty svg { opacity: 0.25; }
-  .result-empty p { font-size: 13px; }
-
   /* ── Status badge ── */
   .status-badge {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
-    margin-bottom: 16px;
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-bottom: 14px;
   }
   .status-badge.active { background: var(--success-bg); color: var(--success-fg); }
   .status-badge.inactive { background: var(--error-bg); color: var(--error-fg); }
@@ -144,70 +151,108 @@
   .status-badge.inactive .status-dot { background: var(--error-fg); }
 
   /* ── Benefit cards ── */
-  .benefit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  .benefit-card {
-    background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px;
-    padding: 12px 14px;
-  }
-  .benefit-card .bc-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
-  .benefit-card .bc-value { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+  .benefit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .benefit-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: 11px 13px; }
+  .benefit-card .bc-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+  .benefit-card .bc-value { font-size: 19px; font-weight: 600; color: var(--text-primary); }
   .benefit-card .bc-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 
   /* ── Progress bar ── */
-  .progress-row { margin-bottom: 12px; }
-  .progress-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+  .progress-row { margin-bottom: 10px; }
+  .progress-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
   .progress-header .ph-label { color: var(--text-secondary); font-weight: 500; }
   .progress-header .ph-val { color: var(--text-primary); font-weight: 600; }
-  .progress-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
   .progress-fill.warning { background: #E47700; }
   .progress-fill.info { background: #3E54CE; }
 
-  /* ── Coverage type pills ── */
-  .coverage-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-  .coverage-pill {
-    font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px;
-  }
+  /* ── Coverage pills ── */
+  .coverage-pills { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+  .coverage-pill { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; }
   .coverage-pill.dental { background: var(--success-bg); color: var(--success-fg); }
   .coverage-pill.medical { background: var(--info-bg); color: var(--info-fg); }
   .coverage-pill.stub { background: var(--warning-bg); color: var(--warning-fg); }
   .coverage-pill.demo { background: #F3F0FF; color: #6B4FBB; }
+  .coverage-pill.zuub { background: #DEE5F7; color: #3E54CE; }
 
   /* ── Benefit table ── */
   .benefit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .benefit-table th { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-align: left; padding: 6px 0; border-bottom: 1px solid var(--divider); text-transform: uppercase; letter-spacing: 0.04em; }
-  .benefit-table td { padding: 8px 0; border-bottom: 0.5px solid var(--border); color: var(--text-body); }
+  .benefit-table td { padding: 7px 0; border-bottom: 0.5px solid var(--border); color: var(--text-body); }
   .benefit-table tr:last-child td { border-bottom: none; }
   .benefit-table td:last-child { text-align: right; font-weight: 600; color: var(--text-primary); }
+  .benefit-table td.yn-yes { color: #3D4826; }
+  .benefit-table td.yn-no { color: #C4433A; }
+  .benefit-table td.yn-unknown { color: var(--text-secondary); }
+
+  /* ── DB Breakdown form ── */
+  .db-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  @media(max-width:900px) { .db-form { grid-template-columns: 1fr; } }
+  .db-section { padding: 20px 24px; border-bottom: 0.5px solid var(--border); }
+  .db-section:nth-child(odd) { border-right: 0.5px solid var(--border); }
+  .db-section-title {
+    font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 0.5px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .db-section-title .db-icon { font-size: 14px; }
+  .db-field { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 0.5px solid var(--border); gap: 8px; }
+  .db-field:last-child { border-bottom: none; }
+  .db-field-label { font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
+  .db-field-value { font-size: 13px; font-weight: 600; color: var(--text-primary); text-align: right; }
+  .db-field-value.empty { color: var(--text-secondary); font-weight: 400; font-style: italic; }
+  .db-field-value.yes { color: #3D4826; }
+  .db-field-value.no { color: #C4433A; }
+  .db-field-value.unknown { color: var(--text-secondary); font-weight: 400; }
+  .db-field-value.manual { color: #E47700; font-weight: 400; font-style: italic; }
+  .db-header {
+    background: var(--hero-bg); padding: 16px 24px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  }
+  .db-header-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .db-header-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .db-coverage-bar { display: flex; gap: 6px; align-items: center; font-size: 12px; }
+  .db-coverage-pct { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .db-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 300px; color: var(--text-secondary); text-align: center; gap: 12px;
+    grid-column: 1 / -1;
+  }
+  .db-empty p { font-size: 13px; }
+  .db-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; }
+  .db-legend-item { display: flex; align-items: center; gap: 4px; }
+  .db-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
   /* ── Raw JSON toggle ── */
-  .json-toggle { font-size: 12px; color: var(--accent); cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 12px; user-select: none; }
+  .json-toggle { font-size: 12px; color: var(--accent); cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 10px; user-select: none; }
   .json-toggle:hover { text-decoration: underline; }
-  .json-block {
-    display: none; margin-top: 8px; background: #1A1A2E; border-radius: 10px;
-    padding: 14px; overflow-x: auto; max-height: 260px; overflow-y: auto;
-  }
+  .json-block { display: none; margin-top: 8px; background: #1A1A2E; border-radius: 10px; padding: 14px; overflow-x: auto; max-height: 240px; overflow-y: auto; }
   .json-block pre { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #A8D8A8; line-height: 1.6; white-space: pre-wrap; }
   .json-block.open { display: block; }
 
-  /* ── Error alert ── */
-  .alert-error {
-    background: var(--error-bg); color: var(--error-fg); border-radius: 10px;
-    padding: 12px 16px; font-size: 13px; margin-bottom: 12px;
+  /* ── Result empty ── */
+  .result-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 280px; color: var(--text-secondary); text-align: center; gap: 12px;
   }
+  .result-empty svg { opacity: 0.25; }
+  .result-empty p { font-size: 13px; }
+
+  /* ── Error alert ── */
+  .alert-error { background: var(--error-bg); color: var(--error-fg); border-radius: 10px; padding: 12px 16px; font-size: 13px; margin-bottom: 12px; }
+  .alert-info { background: var(--info-bg); color: var(--info-fg); border-radius: 10px; padding: 12px 16px; font-size: 13px; margin-bottom: 12px; }
 
   /* ── Footer ── */
-  .footer {
-    background: var(--hero-bg); padding: 24px 48px; position: relative; overflow: hidden;
-    border-top: 0.5px solid rgba(255,255,255,0.5);
-  }
+  .footer { background: var(--hero-bg); padding: 22px 48px; position: relative; overflow: hidden; border-top: 0.5px solid rgba(255,255,255,0.5); }
   .footer-inner { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
   .footer-brand .fb-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
   .footer-brand .fb-sub { font-size: 12px; color: var(--text-secondary); }
   .footer-meta { font-size: 12px; color: var(--text-secondary); text-align: right; }
   .footer-meta a { color: var(--accent); text-decoration: none; }
-  .footer-meta a:hover { text-decoration: underline; }
-  @media(max-width:768px) { .footer { padding: 20px; } .footer-meta { text-align: left; } }
+  @media(max-width:900px) { .footer { padding: 20px; } .footer-meta { text-align: left; } }
 </style>
 </head>
 <body>
@@ -215,143 +260,211 @@
 
   <!-- Hero -->
   <div class="hero">
-    <svg class="blobs" viewBox="0 0 1100 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <svg class="blobs" viewBox="0 0 1200 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
       <path d="M80,40 C120,10 180,60 160,100 C140,140 80,130 60,100 C40,70 40,70 80,40Z" fill="#8FC5A8" opacity="0.18"/>
-      <path d="M900,20 C950,0 1020,40 1010,90 C1000,140 930,150 890,110 C850,70 850,40 900,20Z" fill="#5FA882" opacity="0.15"/>
-      <path d="M500,150 C540,120 600,140 610,170 C620,200 560,210 520,190 C480,170 460,180 500,150Z" fill="#8FC5A8" opacity="0.12"/>
+      <path d="M1050,20 C1100,0 1170,40 1160,90 C1150,140 1080,150 1040,110 C1000,70 1000,40 1050,20Z" fill="#5FA882" opacity="0.15"/>
+      <path d="M560,150 C600,120 660,140 670,170 C680,200 620,210 580,190 C540,170 520,180 560,150Z" fill="#8FC5A8" opacity="0.12"/>
       <path d="M300,10 C330,-10 380,20 370,60 C360,100 310,100 290,70 C270,40 270,30 300,10Z" fill="#5FA882" opacity="0.13"/>
     </svg>
     <div class="hero-inner">
-      <div class="eyebrow"><span class="eyebrow-dot"></span>Live Demo · v2.2</div>
+      <div class="eyebrow"><span class="eyebrow-dot"></span>Live Demo · v2.3</div>
       <h1>Insurance Eligibility Verification</h1>
-      <p>Real-time eligibility checks for dental, medical, and COB scenarios. Powered by Stedi 270/271 + pVerify. Demo mode active — no PHI required.</p>
+      <p>Real-time eligibility checks for dental, medical, and COB scenarios. DB Breakdown auto-fill included. Demo mode active — no PHI required.</p>
       <hr class="hero-divider"/>
       <div class="hero-stats">
-        <div class="hero-stat"><div class="val">33</div><div class="lbl">Supported Payers</div></div>
-        <div class="hero-stat"><div class="val">3</div><div class="lbl">Coverage Types</div></div>
+        <div class="hero-stat"><div class="val">40+</div><div class="lbl">Supported Payers</div></div>
+        <div class="hero-stat"><div class="val">71</div><div class="lbl">DB Breakdown Fields</div></div>
         <div class="hero-stat"><div class="val">&lt;2s</div><div class="lbl">Avg Response Time</div></div>
-        <div class="hero-stat"><div class="val">v2.2</div><div class="lbl">Current Version</div></div>
+        <div class="hero-stat"><div class="val">v2.3</div><div class="lbl">Current Version</div></div>
       </div>
     </div>
   </div>
 
-  <!-- Main -->
-  <div class="main">
+  <!-- View tabs -->
+  <div class="view-tabs">
+    <button class="view-tab active" onclick="switchView('eligibility', this)">Eligibility Check</button>
+    <button class="view-tab" onclick="switchView('db-breakdown', this)">🦷 DB Breakdown Form</button>
+  </div>
 
-    <!-- Left: Input -->
-    <div class="panel">
-      <div class="panel-title">Patient Lookup</div>
-      <div class="panel-sub">Enter patient details to check eligibility</div>
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- VIEW: Eligibility Check -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="view-panel active" id="view-eligibility">
+    <div class="main">
 
-      <div class="api-note">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#3E54CE" stroke-width="1.2"/><path d="M8 7v5M8 5v1" stroke="#3E54CE" stroke-width="1.4" stroke-linecap="round"/></svg>
-        Demo API key: <code>demo-key-2024</code> &nbsp;·&nbsp; DEMO_MODE active
+      <!-- Left: Input -->
+      <div class="panel">
+        <div class="panel-title">Patient Lookup</div>
+        <div class="panel-sub">Enter patient details to check eligibility</div>
+
+        <div class="api-note">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#3E54CE" stroke-width="1.2"/><path d="M8 7v5M8 5v1" stroke="#3E54CE" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Demo API key: <code>demo-key-2024</code> &nbsp;·&nbsp; DEMO_MODE active
+        </div>
+
+        <div style="margin-bottom:8px;">
+          <label>Coverage Type</label>
+          <div class="payer-tabs">
+            <button class="payer-tab active" data-type="dental" onclick="selectType('dental',this)">🦷 Dental</button>
+            <button class="payer-tab" data-type="medical" onclick="selectType('medical',this)">🏥 Medical</button>
+            <button class="payer-tab" data-type="cob" onclick="selectType('cob',this)">⚖️ COB</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" id="first_name" value="Jane" placeholder="Jane"/>
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" id="last_name" value="Doe" placeholder="Doe"/>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" id="dob" value="1985-03-10"/>
+          </div>
+          <div class="form-group">
+            <label>Member ID</label>
+            <input type="text" id="member_id" value="DD-987654" placeholder="DD-987654"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Payer / Insurance</label>
+          <select id="payer_name" onchange="onPayerChange()">
+            <optgroup label="Dental">
+              <option value="Delta Dental PPO" selected>Delta Dental PPO</option>
+              <option value="MetLife Dental">MetLife Dental</option>
+              <option value="Cigna Dental">Cigna Dental</option>
+              <option value="Guardian">Guardian</option>
+              <option value="Aetna Dental">Aetna Dental</option>
+              <option value="VSP">VSP Vision</option>
+            </optgroup>
+            <optgroup label="Medical">
+              <option value="Aetna">Aetna</option>
+              <option value="Cigna">Cigna</option>
+              <option value="United Healthcare">United Healthcare</option>
+              <option value="Humana">Humana</option>
+              <option value="Anthem">Anthem BCBS</option>
+            </optgroup>
+            <optgroup label="Government">
+              <option value="Medicare">Medicare</option>
+              <option value="Medicaid">Medicaid</option>
+              <option value="Tricare">TRICARE</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Group Number <span style="color:var(--text-secondary);font-weight:400">(optional)</span></label>
+          <input type="text" id="group_number" value="GRP-00123" placeholder="GRP-00123"/>
+        </div>
+
+        <hr class="section-rule"/>
+
+        <button class="btn-submit" id="submitBtn" onclick="runCheck()">
+          <span class="spinner" id="spinner"></span>
+          <span id="btnText">Check Eligibility</span>
+        </button>
+
+        <div style="margin-top:14px;">
+          <div style="font-size:11px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:7px;">Quick Presets</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <button class="payer-tab" onclick="loadPreset('dental_delta')">Delta Dental</button>
+            <button class="payer-tab" onclick="loadPreset('dental_metlife')">MetLife</button>
+            <button class="payer-tab" onclick="loadPreset('dental_guardian')">Guardian</button>
+            <button class="payer-tab" onclick="loadPreset('dental_cigna')">Cigna Dental</button>
+            <button class="payer-tab" onclick="loadPreset('dental_aetna')">Aetna Dental</button>
+            <button class="payer-tab" onclick="loadPreset('medical_aetna')">Aetna Medical</button>
+          </div>
+        </div>
       </div>
 
-      <!-- Payer type tabs -->
-      <div style="margin-bottom:8px;">
-        <label>Coverage Type</label>
-        <div class="payer-tabs">
-          <button class="payer-tab active" data-type="dental" onclick="selectType('dental',this)">🦷 Dental</button>
-          <button class="payer-tab" data-type="medical" onclick="selectType('medical',this)">🏥 Medical</button>
-          <button class="payer-tab" data-type="cob" onclick="selectType('cob',this)">⚖️ COB</button>
+      <!-- Right: Results -->
+      <div class="panel" id="results-panel">
+        <div class="panel-title">Eligibility Results</div>
+        <div class="panel-sub">Results will appear here after lookup</div>
+
+        <div class="result-empty" id="empty-state">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#C5C0BA" stroke-width="1.5"/><path d="M20 28h16M28 20v16" stroke="#C5C0BA" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <p>Select a patient and click<br/><strong>Check Eligibility</strong> to see results</p>
         </div>
+
+        <div id="result-content" style="display:none;"></div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>First Name</label>
-          <input type="text" id="first_name" value="Jane" placeholder="Jane"/>
-        </div>
-        <div class="form-group">
-          <label>Last Name</label>
-          <input type="text" id="last_name" value="Doe" placeholder="Doe"/>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- VIEW: DB Breakdown Form -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="view-panel" id="view-db-breakdown">
+
+    <!-- DB Breakdown input bar -->
+    <div style="padding:20px 32px;border-bottom:0.5px solid var(--border);background:var(--surface);display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+      <div style="flex:1;min-width:160px;">
+        <label>Patient Name</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="db_first_name" value="Sarah" placeholder="First"/>
+          <input type="text" id="db_last_name" value="Johnson" placeholder="Last"/>
         </div>
       </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Date of Birth</label>
-          <input type="date" id="dob" value="1985-03-10"/>
-        </div>
-        <div class="form-group">
-          <label>Member ID</label>
-          <input type="text" id="member_id" value="DD-987654" placeholder="DD-987654"/>
-        </div>
+      <div style="min-width:130px;">
+        <label>Date of Birth</label>
+        <input type="date" id="db_dob" value="1985-03-15"/>
       </div>
-
-      <div class="form-group">
-        <label>Payer / Insurance</label>
-        <select id="payer_name" onchange="onPayerChange()">
-          <optgroup label="Dental">
-            <option value="Delta Dental" selected>Delta Dental PPO</option>
-            <option value="MetLife Dental">MetLife Dental</option>
-            <option value="VSP">VSP Vision</option>
-          </optgroup>
-          <optgroup label="Medical">
-            <option value="Aetna">Aetna</option>
-            <option value="Cigna">Cigna</option>
-            <option value="United Healthcare">United Healthcare</option>
-            <option value="Humana">Humana</option>
-            <option value="Anthem">Anthem BCBS</option>
-          </optgroup>
-          <optgroup label="Government">
-            <option value="Medicare">Medicare</option>
-            <option value="Medicaid">Medicaid</option>
-            <option value="Tricare">TRICARE</option>
-          </optgroup>
+      <div style="min-width:130px;">
+        <label>Member ID</label>
+        <input type="text" id="db_member_id" value="DD123456789"/>
+      </div>
+      <div style="min-width:180px;">
+        <label>Insurance / Payer</label>
+        <select id="db_payer">
+          <option value="Delta Dental PPO" selected>Delta Dental PPO</option>
+          <option value="MetLife Dental">MetLife Dental</option>
+          <option value="Cigna Dental">Cigna Dental</option>
+          <option value="Guardian">Guardian</option>
+          <option value="Aetna Dental">Aetna Dental</option>
+          <option value="VSP">VSP Vision</option>
         </select>
       </div>
-
-      <div class="form-group" id="group-field">
-        <label>Group Number <span style="color:var(--text-secondary);font-weight:400">(optional)</span></label>
-        <input type="text" id="group_number" value="GRP-00123" placeholder="GRP-00123"/>
+      <div style="min-width:120px;">
+        <label>Group Number</label>
+        <input type="text" id="db_group" value="GRP-001"/>
       </div>
-
-      <hr class="section-rule"/>
-
-      <button class="btn-submit" id="submitBtn" onclick="runCheck()">
-        <span class="spinner" id="spinner"></span>
-        <span id="btnText">Check Eligibility</span>
+      <button class="btn-submit" style="width:auto;padding:8px 20px;margin-top:0;" onclick="runDbBreakdown()" id="dbBtn">
+        <span class="spinner" id="dbSpinner"></span>
+        <span id="dbBtnText">Run Breakdown</span>
       </button>
-
-      <!-- Quick presets -->
-      <div style="margin-top:16px;">
-        <div style="font-size:11px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Quick Presets</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="payer-tab" onclick="loadPreset('dental_delta')">Delta Dental</button>
-          <button class="payer-tab" onclick="loadPreset('dental_metlife')">MetLife Dental</button>
-          <button class="payer-tab" onclick="loadPreset('medical_aetna')">Aetna Medical</button>
-          <button class="payer-tab" onclick="loadPreset('medicare')">Medicare</button>
-        </div>
-      </div>
     </div>
 
-    <!-- Right: Results -->
-    <div class="panel" id="results-panel">
-      <div class="panel-title">Eligibility Results</div>
-      <div class="panel-sub">Results will appear here after lookup</div>
-
-      <div class="result-empty" id="empty-state">
-        <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#C5C0BA" stroke-width="1.5"/><path d="M20 28h16M28 20v16" stroke="#C5C0BA" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <p>Select a patient and click<br/><strong>Check Eligibility</strong> to see results</p>
+    <!-- DB Breakdown result -->
+    <div id="db-result">
+      <div class="db-form">
+        <div class="db-empty">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#C5C0BA" stroke-width="1.5"/><path d="M16 28h24M28 16v24" stroke="#C5C0BA" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <p>Select a payer and click <strong>Run Breakdown</strong><br/>to auto-fill the DB Breakdown form</p>
+        </div>
       </div>
-
-      <div id="result-content" style="display:none;"></div>
     </div>
 
   </div>
 
   <!-- Footer -->
   <div class="footer">
-    <svg class="blobs" viewBox="0 0 1100 100" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <svg class="blobs" viewBox="0 0 1200 100" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
       <path d="M50,20 C90,-5 150,30 140,65 C130,100 70,95 50,65 C30,35 10,45 50,20Z" fill="#8FC5A8" opacity="0.15"/>
-      <path d="M950,10 C990,-10 1060,25 1050,60 C1040,95 970,100 940,70 C910,40 910,30 950,10Z" fill="#5FA882" opacity="0.13"/>
+      <path d="M1100,10 C1140,-10 1200,25 1190,60 C1180,95 1110,100 1080,70 C1050,40 1060,30 1100,10Z" fill="#5FA882" opacity="0.13"/>
     </svg>
     <div class="footer-inner">
       <div class="footer-brand">
         <div class="fb-title">Dharma Eligibility API</div>
-        <div class="fb-sub">Insurance Eligibility & COB · v2.2.0</div>
+        <div class="fb-sub">Insurance Eligibility & COB · v2.3.0 · DB Breakdown Auto-Fill</div>
       </div>
       <div class="footer-meta">
         <div>API: <a href="https://dharma-eligibility.vercel.app" target="_blank">dharma-eligibility.vercel.app</a></div>
@@ -367,35 +480,38 @@ const API_BASE = 'https://dharma-eligibility.vercel.app';
 const API_KEY  = 'demo-key-2024';
 
 let currentType = 'dental';
+let lastResult  = null;
 
+// ── View switching ────────────────────────────────────────────────────────────
+function switchView(view, el) {
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── Presets ───────────────────────────────────────────────────────────────────
 const PRESETS = {
-  dental_delta:   { first_name:'Jane', last_name:'Doe',   dob:'1985-03-10', member_id:'DD-987654',  group_number:'GRP-00123', payer:'Delta Dental',  type:'dental'  },
-  dental_metlife: { first_name:'Mark', last_name:'Chen',  dob:'1978-07-22', member_id:'ML-334455',  group_number:'GRP-00456', payer:'MetLife Dental',type:'dental'  },
-  medical_aetna:  { first_name:'John', last_name:'Smith', dob:'1960-05-20', member_id:'AET-555666', group_number:'GRP-00789', payer:'Aetna',         type:'medical' },
-  medicare:       { first_name:'Bob',  last_name:'Jones', dob:'1950-01-15', member_id:'1EG4-TE5-MK72', group_number:'',       payer:'Medicare',      type:'medical' },
+  dental_delta:   { first_name:'Jane',  last_name:'Doe',      dob:'1985-03-10', member_id:'DD-987654',  group_number:'GRP-00123', payer:'Delta Dental PPO', type:'dental' },
+  dental_metlife: { first_name:'Sarah', last_name:'Johnson',  dob:'1985-03-15', member_id:'ML-334455',  group_number:'GRP-00456', payer:'MetLife Dental',   type:'dental' },
+  dental_guardian:{ first_name:'Mike',  last_name:'Williams', dob:'1978-11-20', member_id:'GRD-789012', group_number:'GRP-00789', payer:'Guardian',         type:'dental' },
+  dental_cigna:   { first_name:'Lisa',  last_name:'Brown',    dob:'1990-06-15', member_id:'CIG-445566', group_number:'GRP-00321', payer:'Cigna Dental',     type:'dental' },
+  dental_aetna:   { first_name:'Tom',   last_name:'Davis',    dob:'1975-09-30', member_id:'AET-667788', group_number:'GRP-00654', payer:'Aetna Dental',     type:'dental' },
+  medical_aetna:  { first_name:'John',  last_name:'Smith',    dob:'1960-05-20', member_id:'AET-555666', group_number:'GRP-00789', payer:'Aetna',            type:'medical' },
 };
 
 function selectType(type, el) {
   currentType = type;
   document.querySelectorAll('.payer-tab[data-type]').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  // Update payer dropdown to show relevant options
   const sel = document.getElementById('payer_name');
-  if (type === 'dental') {
-    sel.value = 'Delta Dental';
-    document.getElementById('member_id').value = 'DD-987654';
-  } else if (type === 'medical') {
-    sel.value = 'Aetna';
-    document.getElementById('member_id').value = 'AET-555666';
-  } else if (type === 'cob') {
-    sel.value = 'Aetna';
-    document.getElementById('member_id').value = 'AET-555666';
-  }
+  if (type === 'dental') { sel.value = 'Delta Dental PPO'; document.getElementById('member_id').value = 'DD-987654'; }
+  else if (type === 'medical') { sel.value = 'Aetna'; document.getElementById('member_id').value = 'AET-555666'; }
 }
 
 function onPayerChange() {
   const payer = document.getElementById('payer_name').value.toLowerCase();
-  if (payer.includes('dental') || payer.includes('vsp')) {
+  if (payer.includes('dental') || payer.includes('vsp') || payer.includes('guardian')) {
     currentType = 'dental';
     document.querySelectorAll('.payer-tab[data-type]').forEach(t => t.classList.remove('active'));
     document.querySelector('.payer-tab[data-type="dental"]').classList.add('active');
@@ -417,17 +533,15 @@ function loadPreset(key) {
   if (tab) tab.classList.add('active');
 }
 
+// ── Eligibility check ─────────────────────────────────────────────────────────
 async function runCheck() {
   const btn = document.getElementById('submitBtn');
   const spinner = document.getElementById('spinner');
   const btnText = document.getElementById('btnText');
-
-  btn.disabled = true;
-  spinner.style.display = 'block';
-  btnText.textContent = 'Checking…';
+  btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Checking…';
 
   const payer = document.getElementById('payer_name').value;
-  const isDental = currentType === 'dental' || payer.toLowerCase().includes('dental') || payer.toLowerCase().includes('vsp');
+  const isDental = currentType === 'dental' || payer.toLowerCase().includes('dental') || payer.toLowerCase().includes('vsp') || payer.toLowerCase() === 'guardian';
 
   const body = {
     first_name:   document.getElementById('first_name').value,
@@ -448,21 +562,61 @@ async function runCheck() {
       body: JSON.stringify(body)
     });
     const data = await res.json();
+    lastResult = data;
     renderResult(data, body);
   } catch(e) {
     renderError(e.message);
   } finally {
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btnText.textContent = 'Check Eligibility';
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Check Eligibility';
   }
 }
 
+// ── DB Breakdown ──────────────────────────────────────────────────────────────
+async function runDbBreakdown() {
+  const btn = document.getElementById('dbBtn');
+  const spinner = document.getElementById('dbSpinner');
+  const btnText = document.getElementById('dbBtnText');
+  btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Loading…';
+
+  const payer = document.getElementById('db_payer').value;
+  const body = {
+    first_name:   document.getElementById('db_first_name').value,
+    last_name:    document.getElementById('db_last_name').value,
+    dob:          document.getElementById('db_dob').value,
+    coverages: [{
+      payer_name:   payer,
+      member_id:    document.getElementById('db_member_id').value,
+      group_number: document.getElementById('db_group').value,
+      plan_type:    'dental',
+    }]
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': API_KEY },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    renderDbBreakdown(data, body);
+  } catch(e) {
+    document.getElementById('db-result').innerHTML = `<div style="padding:24px;"><div class="alert-error"><strong>Error:</strong> ${e.message}</div></div>`;
+  } finally {
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Run Breakdown';
+  }
+}
+
+// ── Render helpers ────────────────────────────────────────────────────────────
 function fmt(val, type='currency') {
-  if (val === null || val === undefined) return '—';
+  if (val === null || val === undefined) return null;
   if (type === 'currency') return '$' + Number(val).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
   if (type === 'pct') return Math.round(val * 100) + '%';
-  return val;
+  return String(val);
+}
+
+function fmtOrDash(val, type='currency') {
+  const r = fmt(val, type);
+  return r === null ? '—' : r;
 }
 
 function renderResult(data, req) {
@@ -475,91 +629,105 @@ function renderResult(data, req) {
   const isActive  = data.active;
   const isDemo    = data._demo;
   const isStub    = data._stub;
+  const src       = data.data_source;
 
   let html = '';
-
-  // Status badge
-  html += `<div class="status-badge ${isActive ? 'active' : 'inactive'}">
-    <span class="status-dot"></span>
-    ${isActive ? 'Coverage Active' : 'No Active Coverage'}
-  </div>`;
-
-  // Pills
+  html += `<div class="status-badge ${isActive ? 'active' : 'inactive'}"><span class="status-dot"></span>${isActive ? 'Coverage Active' : 'No Active Coverage'}</div>`;
   html += '<div class="coverage-pills">';
   if (isDental)  html += '<span class="coverage-pill dental">🦷 Dental</span>';
   if (isMedical) html += '<span class="coverage-pill medical">🏥 Medical</span>';
   if (isDemo)    html += '<span class="coverage-pill demo">Demo Mode</span>';
   if (isStub)    html += '<span class="coverage-pill stub">⚠ Stub</span>';
+  if (src === 'zuub') html += '<span class="coverage-pill zuub">Zuub</span>';
   html += '</div>';
 
-  // Plan name
-  if (data.plan_name) {
-    html += `<div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">${data.plan_name}</div>`;
-  }
-  if (data.plan_begin_date) {
-    html += `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Effective: ${data.plan_begin_date} &nbsp;·&nbsp; Network: ${data.network || 'In-Network'}</div>`;
-  }
+  if (data.plan_name) html += `<div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:3px;">${data.plan_name}</div>`;
+  if (data.plan_begin_date) html += `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Effective: ${data.plan_begin_date} &nbsp;·&nbsp; ${data.network || 'In-Network'}</div>`;
 
   html += '<hr class="section-rule"/>';
 
   if (isDental) {
-    // Dental benefits
     html += '<div class="benefit-grid">';
-    html += benefitCard('Annual Max', fmt(data.annual_maximum), `Used: ${fmt(data.annual_maximum_used)}`);
-    html += benefitCard('Remaining', fmt(data.annual_maximum_remaining), 'Annual balance left');
-    html += benefitCard('Deductible', fmt(data.deductible), `Met: ${fmt(data.deductible_met)}`);
-    html += benefitCard('Ortho Max', fmt(data.ortho_lifetime_max), 'Lifetime');
+    html += benefitCard('Annual Max', fmtOrDash(data.annual_maximum), `Used: ${fmtOrDash(data.annual_maximum_used)}`);
+    html += benefitCard('Remaining', fmtOrDash(data.annual_maximum_remaining), 'Annual balance left');
+    html += benefitCard('Deductible', fmtOrDash(data.deductible), `Met: ${fmtOrDash(data.deductible_met)}`);
+    html += benefitCard('Ortho Max', fmtOrDash(data.ortho_lifetime_max), 'Lifetime');
     html += '</div>';
 
-    // Annual max progress
     if (data.annual_maximum && data.annual_maximum_used !== undefined) {
       const pct = Math.min(100, (data.annual_maximum_used / data.annual_maximum) * 100);
-      html += progressBar('Annual Maximum Used', fmt(data.annual_maximum_used) + ' / ' + fmt(data.annual_maximum), pct, pct > 75 ? 'warning' : '');
+      html += progressBar('Annual Maximum Used', fmtOrDash(data.annual_maximum_used) + ' / ' + fmtOrDash(data.annual_maximum), pct, pct > 75 ? 'warning' : '');
     }
 
     html += '<hr class="section-rule"/>';
-
-    // Coverage table
+    html += '<div class="section-label">Coverage Percentages</div>';
     html += '<table class="benefit-table"><thead><tr><th>Benefit</th><th>Coverage</th></tr></thead><tbody>';
-    html += tableRow('Preventive (cleanings, X-rays)', fmt(data.preventive_coverage, 'pct'));
-    html += tableRow('Basic (fillings, extractions)', fmt(data.basic_coverage, 'pct'));
-    html += tableRow('Major (crowns, root canals)', fmt(data.major_coverage, 'pct'));
-    html += tableRow('Orthodontics', fmt(data.ortho_coverage, 'pct'));
-    html += tableRow('Waiting Period — Basic', data.waiting_period_basic || '—');
-    html += tableRow('Waiting Period — Major', data.waiting_period_major || '—');
+    html += tableRow('Preventive (cleanings, X-rays)', fmtOrDash(data.preventive_coverage, 'pct'));
+    html += tableRow('Basic (fillings, extractions)', fmtOrDash(data.basic_coverage, 'pct'));
+    html += tableRow('Major (crowns, root canals)', fmtOrDash(data.major_coverage, 'pct'));
+    if (data.perio_coverage !== undefined) html += tableRow('Periodontics', fmtOrDash(data.perio_coverage, 'pct'));
+    if (data.endo_coverage !== undefined) html += tableRow('Endodontics', fmtOrDash(data.endo_coverage, 'pct'));
+    if (data.oral_surgery_coverage !== undefined) html += tableRow('Oral Surgery', fmtOrDash(data.oral_surgery_coverage, 'pct'));
+    html += tableRow('Orthodontics', fmtOrDash(data.ortho_coverage, 'pct'));
     html += '</tbody></table>';
 
-  } else {
-    // Medical benefits
-    html += '<div class="benefit-grid">';
-    html += benefitCard('Deductible', fmt(data.deductible), `Met: ${fmt(data.deductible_met)}`);
-    html += benefitCard('OOP Max', fmt(data.oop_max), `Met: ${fmt(data.oop_met)}`);
-    html += benefitCard('Copay', fmt(data.copay), 'Per visit');
-    html += benefitCard('Coinsurance', fmt(data.coinsurance, 'pct'), 'After deductible');
-    html += '</div>';
+    if (data.prophy_frequency || data.fmx_frequency) {
+      html += '<hr class="section-rule"/>';
+      html += '<div class="section-label">Frequency Limits</div>';
+      html += '<table class="benefit-table"><thead><tr><th>Procedure</th><th>Frequency</th></tr></thead><tbody>';
+      if (data.prophy_frequency) html += tableRow('Prophy (D1110)', data.prophy_frequency);
+      if (data.periodic_exam_frequency) html += tableRow('Periodic Exam (D0120)', data.periodic_exam_frequency);
+      if (data.fmx_frequency) html += tableRow('FMX (D0210)', data.fmx_frequency);
+      if (data.bitewing_frequency) html += tableRow('Bitewings (D0274)', data.bitewing_frequency);
+      if (data.srp_frequency) html += tableRow('SRP (D4341)', data.srp_frequency);
+      html += '</tbody></table>';
+    }
 
+    if (data.missing_tooth_clause !== undefined || data.fillings_downgrade !== undefined) {
+      html += '<hr class="section-rule"/>';
+      html += '<div class="section-label">Clauses & Exclusions</div>';
+      html += '<table class="benefit-table"><thead><tr><th>Clause</th><th>Status</th></tr></thead><tbody>';
+      if (data.missing_tooth_clause !== undefined) html += tableRow('Missing Tooth Clause', data.missing_tooth_clause ? 'Yes ⚠' : 'No ✓');
+      if (data.fillings_downgrade !== undefined) html += tableRow('Fillings Downgrade', data.fillings_downgrade ? 'Yes ⚠' : 'No ✓');
+      if (data.waiting_period_basic) html += tableRow('Waiting Period — Basic', data.waiting_period_basic);
+      if (data.waiting_period_major) html += tableRow('Waiting Period — Major', data.waiting_period_major);
+      if (data.replacement_crowns) html += tableRow('Crown Replacement', data.replacement_crowns);
+      html += '</tbody></table>';
+    }
+
+    if (data.implants_covered !== undefined) {
+      html += '<hr class="section-rule"/>';
+      html += '<div class="section-label">Implants</div>';
+      html += '<table class="benefit-table"><thead><tr><th>Item</th><th>Value</th></tr></thead><tbody>';
+      html += tableRow('Implants Covered', data.implants_covered ? 'Yes ✓' : 'No ✗');
+      if (data.implants_covered) {
+        html += tableRow('Implants Coverage', fmtOrDash(data.implants_coverage, 'pct'));
+        html += tableRow('Abutment (D6057)', fmtOrDash(data.abutment_coverage, 'pct'));
+        html += tableRow('Crown on Implant (D6058)', fmtOrDash(data.implant_crown_coverage, 'pct'));
+      }
+      html += '</tbody></table>';
+    }
+
+  } else {
+    html += '<div class="benefit-grid">';
+    html += benefitCard('Deductible', fmtOrDash(data.deductible), `Met: ${fmtOrDash(data.deductible_met)}`);
+    html += benefitCard('OOP Max', fmtOrDash(data.oop_max), `Met: ${fmtOrDash(data.oop_met)}`);
+    html += benefitCard('Copay', fmtOrDash(data.copay), 'Per visit');
+    html += benefitCard('Coinsurance', fmtOrDash(data.coinsurance, 'pct'), 'After deductible');
+    html += '</div>';
     if (data.deductible && data.deductible_met !== undefined) {
       const pct = Math.min(100, (data.deductible_met / data.deductible) * 100);
-      html += progressBar('Deductible Progress', fmt(data.deductible_met) + ' / ' + fmt(data.deductible), pct, pct > 75 ? 'warning' : '');
-    }
-    if (data.oop_max && data.oop_met !== undefined) {
-      const pct = Math.min(100, (data.oop_met / data.oop_max) * 100);
-      html += progressBar('Out-of-Pocket Progress', fmt(data.oop_met) + ' / ' + fmt(data.oop_max), pct, 'info');
+      html += progressBar('Deductible Progress', fmtOrDash(data.deductible_met) + ' / ' + fmtOrDash(data.deductible), pct, pct > 75 ? 'warning' : '');
     }
   }
 
-  // Raw JSON toggle
   html += `<div class="json-toggle" onclick="toggleJson(this)">
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     View raw JSON response
   </div>
-  <div class="json-block" id="json-block">
-    <pre>${JSON.stringify(data, null, 2)}</pre>
-  </div>`;
+  <div class="json-block" id="json-block"><pre>${JSON.stringify(data, null, 2)}</pre></div>`;
 
   el.innerHTML = html;
-
-  // Animate progress bars
   setTimeout(() => {
     document.querySelectorAll('.progress-fill').forEach(bar => {
       const w = bar.getAttribute('data-width');
@@ -568,24 +736,258 @@ function renderResult(data, req) {
   }, 50);
 }
 
-function benefitCard(label, value, sub) {
-  return `<div class="benefit-card">
-    <div class="bc-label">${label}</div>
-    <div class="bc-value">${value}</div>
-    <div class="bc-sub">${sub}</div>
+// ── DB Breakdown renderer ─────────────────────────────────────────────────────
+function renderDbBreakdown(data, req) {
+  const pct = v => (v !== null && v !== undefined) ? Math.round(v * 100) + '%' : null;
+  const yn  = v => (v === null || v === undefined) ? null : (v ? 'Yes' : 'No');
+  const cur = v => (v !== null && v !== undefined) ? '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits:2}) : null;
+
+  const ded = data.deductible;
+  const dedMet = data.deductible_met;
+  const dedMetYN = (ded !== null && dedMet !== null && ded !== undefined && dedMet !== undefined)
+    ? (dedMet >= ded ? 'Yes' : 'No') : null;
+
+  const annMax = data.annual_maximum;
+  const annUsed = data.annual_maximum_used;
+  const annRem = data.annual_maximum_remaining;
+  const coveredFields = countCoveredFields(data);
+  const totalFields = 71;
+  const coveragePct = Math.round(coveredFields / totalFields * 100);
+
+  // Source badge
+  const src = data.data_source || 'demo';
+  const srcLabel = src === 'zuub' ? '⭐ Zuub Live' : src === 'stedi' ? 'Stedi EDI' : 'Demo Data';
+  const srcColor = src === 'zuub' ? '#3E54CE' : src === 'stedi' ? '#5FA882' : '#6B4FBB';
+
+  let html = `
+  <div class="db-header">
+    <div>
+      <div class="db-header-title">DB Breakdown — ${data.plan_name || req.coverages[0].payer_name}</div>
+      <div class="db-header-sub">${req.first_name} ${req.last_name} &nbsp;·&nbsp; DOB: ${req.dob} &nbsp;·&nbsp; Member: ${data.member_id || req.coverages[0].member_id}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div class="db-coverage-bar">
+        <div class="db-coverage-pct">${coveragePct}%</div>
+        <div style="font-size:11px;color:var(--text-secondary);">Fields<br/>Auto-Filled</div>
+      </div>
+      <div style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:${srcColor}20;color:${srcColor};">${srcLabel}</div>
+      <div class="db-legend">
+        <div class="db-legend-item"><div class="db-legend-dot" style="background:#3D4826;"></div> Filled</div>
+        <div class="db-legend-item"><div class="db-legend-dot" style="background:#E47700;"></div> Manual</div>
+        <div class="db-legend-item"><div class="db-legend-dot" style="background:#C5C0BA;"></div> N/A</div>
+      </div>
+    </div>
+  </div>
+  <div class="db-form">`;
+
+  // ── Section 1: Patient & Plan Info ────────────────────────────────────────
+  html += dbSection('📋 Patient & Plan Info', [
+    ['INS Name',          data.plan_name],
+    ['INS Phone #',       data.payer_phone],
+    ['Payor ID',          data.payer_id],
+    ['INS Effective Date',data.plan_begin_date],
+    ['Group Number',      data.group_number || req.coverages[0].group_number],
+    ['Member ID',         data.member_id || req.coverages[0].member_id],
+    ['Network',           data.network],
+    ['Benefit Period',    data.benefit_period ? (data.benefit_period.charAt(0).toUpperCase() + data.benefit_period.slice(1)) : null],
+    ['Fee Schedule',      null, 'manual'],
+    ['Claim Address',     data.claim_address],
+  ]);
+
+  // ── Section 2: Deductibles & Maximums ────────────────────────────────────
+  html += dbSection('💰 Deductibles & Maximums', [
+    ['INS Max (Annual)',       cur(annMax)],
+    ['INS Used',               cur(annUsed)],
+    ['INS Remaining',          cur(annRem)],
+    ['Ded: Individual $',      cur(ded)],
+    ['Ded: Family $',          cur(data.deductible_family)],
+    ['Ded Met $',              cur(dedMet)],
+    ['Ded Met: Yes/No',        dedMetYN],
+    ['Ded Applies Preventive', yn(data.deductible_applies_preventive)],
+    ['Preventive in Max',      yn(data.preventive_in_max)],
+    ['COB Type',               data.cob_type],
+  ]);
+
+  // ── Section 3: Coverage Percentages ──────────────────────────────────────
+  html += dbSection('📊 Coverage Percentages', [
+    ['Prev %',          pct(data.preventive_coverage)],
+    ['Basic %',         pct(data.basic_coverage)],
+    ['Major %',         pct(data.major_coverage)],
+    ['Perio %',         pct(data.perio_coverage)],
+    ['Endo %',          pct(data.endo_coverage)],
+    ['O.S. % (Oral Surgery)', pct(data.oral_surgery_coverage)],
+    ['Fillings %',      pct(data.fillings_coverage || data.basic_coverage)],
+    ['Crowns %',        pct(data.crowns_coverage || data.major_coverage)],
+    ['Dent % (Dentures)', pct(data.dentures_coverage || data.major_coverage)],
+    ['Ortho %',         pct(data.ortho_coverage)],
+  ]);
+
+  // ── Section 4: Waiting Periods & Clauses ─────────────────────────────────
+  html += dbSection('⚠️ Waiting Periods & Clauses', [
+    ['Waiting Period: Yes/No', (data.waiting_period_basic && data.waiting_period_basic !== 'None' && data.waiting_period_basic !== 'N/A') ? 'Yes' : 'No'],
+    ['Basic Waiting Period',   data.waiting_period_basic],
+    ['Major Waiting Period',   data.waiting_period_major],
+    ['Missing Tooth Clause',   yn(data.missing_tooth_clause)],
+    ['Fillings Downgrade',     yn(data.fillings_downgrade)],
+    ['Crowns Paid On',         data.crowns_paid_on],
+    ['Same Day Treatment',     yn(data.same_day_treatment)],
+    ['Claims Expiration',      data.claims_filing_deadline],
+    ['COB',                    data.cob_type],
+    ['Benefit Period',         data.benefit_period],
+  ]);
+
+  // ── Section 5: Frequency Limits ──────────────────────────────────────────
+  html += dbSection('🔁 Frequency Limits', [
+    ['Prophy (D1110)',          data.prophy_frequency],
+    ['Periodic Exam (D0120)',   data.periodic_exam_frequency],
+    ['Comp Exam (D0150)',       data.comp_exam_frequency],
+    ['FMX (D0210)',             data.fmx_frequency],
+    ['Bitewings (D0274)',       data.bitewing_frequency],
+    ["PA's (D0220/D0230)",     data.pa_frequency],
+    ['Fluoride (D1208)',        data.fluoride_covered !== undefined ? (yn(data.fluoride_covered) + (data.fluoride_age_limit ? ` (age ≤${data.fluoride_age_limit})` : '')) : null],
+    ['Sealants (D1351)',        data.sealants_covered !== undefined ? (yn(data.sealants_covered) + (data.sealants_age_limit ? ` (age ≤${data.sealants_age_limit})` : '')) : null],
+    ['SDF (D1354)',             yn(data.sdf_covered)],
+    ['Oral Cancer (D0431)',     data.specific_codes?.D0431 ? (data.specific_codes.D0431.covered ? 'Covered' : 'Not Covered') : null],
+  ]);
+
+  // ── Section 6: Periodontics ───────────────────────────────────────────────
+  html += dbSection('🦷 Periodontics', [
+    ['FMD (D4355)',             pct(data.perio_coverage)],
+    ['FMD Frequency',          data.fmd_frequency],
+    ['Same Day as Exam',       yn(data.perio_same_day_exam)],
+    ['Perio Mnt (D4910)',      pct(data.perio_coverage)],
+    ['Perio Mnt Frequency',    data.perio_maintenance_frequency],
+    ['Shares Freq w/ D1110',   yn(data.perio_shares_prophy_frequency)],
+    ['SRP (D4341)',             pct(data.perio_coverage)],
+    ['SRP Frequency',          data.srp_frequency],
+    ['Quads per Visit',        data.srp_quads_per_visit ? String(data.srp_quads_per_visit) : null],
+    ['Arestin (D4381)',        yn(data.arestin_covered)],
+  ]);
+
+  // ── Section 7: Replacement Clauses ───────────────────────────────────────
+  html += dbSection('🔄 Replacement Clauses', [
+    ['Crowns replacement',     data.replacement_crowns],
+    ['Bridges replacement',    data.replacement_bridges],
+    ['Dentures replacement',   data.replacement_dentures],
+    ['Partials replacement',   data.replacement_partials],
+    ['Claims Filing Deadline', data.claims_filing_deadline],
+    ['Fillings Freq (D2392)',  null, 'manual'],
+    ['Crowns Paid On',         data.crowns_paid_on],
+    ['', null],
+    ['', null],
+    ['', null],
+  ]);
+
+  // ── Section 8: Implants ───────────────────────────────────────────────────
+  html += dbSection('🔩 Implants (D6010)', [
+    ['Implants Covered',       yn(data.implants_covered)],
+    ['Implants %',             pct(data.implants_coverage)],
+    ['Separate Yearly Max',    cur(data.implants_separate_max)],
+    ['Abutment (D6057)',       pct(data.abutment_coverage)],
+    ['Crown on Implant (D6058)', pct(data.implant_crown_coverage)],
+    ['', null],
+    ['', null],
+    ['', null],
+    ['', null],
+    ['', null],
+  ]);
+
+  // ── Section 9: Orthodontics ───────────────────────────────────────────────
+  html += dbSection('😁 Orthodontics (D8090)', [
+    ['Ortho Coverage %',       pct(data.ortho_coverage)],
+    ['Ortho Max $',            cur(data.ortho_lifetime_max)],
+    ['Ortho Used $',           cur(data.ortho_lifetime_used)],
+    ['Ortho Ded $',            cur(data.ortho_deductible)],
+    ['Ortho Age Limit',        data.ortho_age_limit ? String(data.ortho_age_limit) : null],
+    ['Ortho Payment Method',   data.ortho_payment_method],
+    ['', null],
+    ['', null],
+    ['', null],
+    ['', null],
+  ]);
+
+  // ── Section 10: Specific Codes ────────────────────────────────────────────
+  const sc = data.specific_codes || {};
+  html += dbSection('🔬 Specific Codes', [
+    ['Consultation (D9310)',   sc.D9310 ? (sc.D9310.covered ? `Covered — ${sc.D9310.category}` : 'Not Covered') : null],
+    ['Night Guard (D9944)',    sc.D9944 ? (sc.D9944.covered ? `Covered — ${sc.D9944.category}` : 'Not Covered') : null],
+    ['Core Build Up (D2950)',  sc.D2950 ? (sc.D2950.covered ? `Covered — ${sc.D2950.category}` : 'Not Covered') : null],
+    ['Bone Graft (D7953)',     sc.D7953 ? (sc.D7953.covered ? `Covered — ${sc.D7953.category}` : 'Not Covered') : null],
+    ['IV Sedation (D9239)',    sc.D9239 ? (sc.D9239.covered ? `Covered — ${sc.D9239.category}` : 'Not Covered') : null],
+    ['Deep Sedation (D9243)',  sc.D9243 ? (sc.D9243.covered ? `Covered — ${sc.D9243.category}` : 'Not Covered') : null],
+    ['Arestin (D4381)',        yn(data.arestin_covered)],
+    ['SDF (D1354)',            yn(data.sdf_covered)],
+    ['Occlusion Adj (D9951)',  null, 'manual'],
+    ['Curadont (D2991)',       null, 'manual'],
+  ]);
+
+  html += '</div>';
+
+  // Raw JSON toggle
+  html += `<div style="padding:16px 24px;border-top:0.5px solid var(--border);">
+    <div class="json-toggle" onclick="toggleDbJson(this)">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      View raw API response
+    </div>
+    <div class="json-block" id="db-json-block"><pre>${JSON.stringify(data, null, 2)}</pre></div>
   </div>`;
+
+  document.getElementById('db-result').innerHTML = html;
+}
+
+function dbSection(title, fields) {
+  let html = `<div class="db-section"><div class="db-section-title">${title}</div>`;
+  for (const [label, value, hint] of fields) {
+    if (!label) { html += `<div class="db-field" style="border:none;padding:2px 0;"></div>`; continue; }
+    const isEmpty = value === null || value === undefined || value === '';
+    const isManual = hint === 'manual';
+    let valClass = isEmpty ? (isManual ? 'manual' : 'empty') : '';
+    if (!isEmpty && (value === 'Yes' || value === 'No')) {
+      valClass = value === 'Yes' ? 'yes' : 'no';
+    }
+    const displayVal = isEmpty ? (isManual ? 'Call payer' : '—') : value;
+    html += `<div class="db-field">
+      <span class="db-field-label">${label}</span>
+      <span class="db-field-value ${valClass}">${displayVal}</span>
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function countCoveredFields(data) {
+  const fields = [
+    data.plan_name, data.payer_phone, data.payer_id, data.plan_begin_date,
+    data.group_number, data.member_id, data.network, data.benefit_period, data.claim_address,
+    data.annual_maximum, data.annual_maximum_used, data.annual_maximum_remaining,
+    data.deductible, data.deductible_family, data.deductible_met,
+    data.deductible_applies_preventive, data.preventive_in_max,
+    data.preventive_coverage, data.basic_coverage, data.major_coverage,
+    data.perio_coverage, data.endo_coverage, data.oral_surgery_coverage,
+    data.fillings_coverage, data.crowns_coverage, data.dentures_coverage, data.ortho_coverage,
+    data.waiting_period_basic, data.waiting_period_major,
+    data.missing_tooth_clause, data.fillings_downgrade, data.crowns_paid_on, data.same_day_treatment,
+    data.prophy_frequency, data.periodic_exam_frequency, data.fmx_frequency, data.bitewing_frequency,
+    data.fluoride_covered, data.sealants_covered,
+    data.replacement_crowns, data.replacement_bridges, data.replacement_dentures, data.replacement_partials,
+    data.claims_filing_deadline,
+    data.implants_covered, data.implants_coverage, data.abutment_coverage, data.implant_crown_coverage,
+    data.ortho_lifetime_max, data.ortho_lifetime_used, data.ortho_deductible, data.ortho_age_limit, data.ortho_payment_method,
+    data.srp_frequency, data.srp_quads_per_visit, data.perio_maintenance_frequency,
+    data.perio_shares_prophy_frequency, data.perio_same_day_exam, data.arestin_covered,
+    data.fmd_frequency,
+    data.specific_codes?.D9310, data.specific_codes?.D9944, data.specific_codes?.D2950,
+    data.specific_codes?.D7953, data.specific_codes?.D9239,
+  ];
+  return fields.filter(v => v !== null && v !== undefined).length;
+}
+
+function benefitCard(label, value, sub) {
+  return `<div class="benefit-card"><div class="bc-label">${label}</div><div class="bc-value">${value}</div><div class="bc-sub">${sub}</div></div>`;
 }
 
 function progressBar(label, valText, pct, cls='') {
-  return `<div class="progress-row">
-    <div class="progress-header">
-      <span class="ph-label">${label}</span>
-      <span class="ph-val">${valText}</span>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill ${cls}" style="width:0%" data-width="${pct.toFixed(1)}"></div>
-    </div>
-  </div>`;
+  return `<div class="progress-row"><div class="progress-header"><span class="ph-label">${label}</span><span class="ph-val">${valText}</span></div><div class="progress-track"><div class="progress-fill ${cls}" style="width:0%" data-width="${pct.toFixed(1)}"></div></div></div>`;
 }
 
 function tableRow(label, value) {
@@ -598,6 +1000,12 @@ function toggleJson(el) {
   el.querySelector('svg').style.transform = block.classList.contains('open') ? 'rotate(180deg)' : '';
 }
 
+function toggleDbJson(el) {
+  const block = document.getElementById('db-json-block');
+  block.classList.toggle('open');
+  el.querySelector('svg').style.transform = block.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+
 function renderError(msg) {
   document.getElementById('empty-state').style.display = 'none';
   const el = document.getElementById('result-content');
@@ -605,7 +1013,7 @@ function renderError(msg) {
   el.innerHTML = `<div class="alert-error"><strong>Error:</strong> ${msg}</div>`;
 }
 
-// Auto-run on load with dental preset
+// Auto-run on load
 window.addEventListener('load', () => {
   loadPreset('dental_delta');
 });
