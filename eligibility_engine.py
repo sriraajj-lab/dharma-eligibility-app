@@ -1,9 +1,16 @@
 """
-eligibility_engine.py — v2.2
-Stedi 270/271 eligibility + pVerify coverage discovery + dental stub.
+eligibility_engine.py — v2.3
+Stedi 270/271 eligibility + pVerify coverage discovery + dental routing.
 Security hardened: API keys read fresh per call, PROVIDER_NPI validated,
 unknown payer IDs raise ValueError, dental stub returns no dollar amounts.
 DEMO_MODE=true returns realistic sandbox data without live API keys.
+
+v2.3 changes:
+  - Full DB Breakdown field set added to all dental demo profiles
+    (frequency limits, perio/endo/OS %, missing tooth clause, implants,
+     replacement clauses, ortho completion, specific codes, payer directory)
+  - DENTAL_PROVIDER env var routes dental to zuub / dentalxchange / stedi
+  - Zuub and DentalXChange engines imported lazily when credentials present
 """
 
 import os
@@ -51,11 +58,16 @@ def mask_coverage(cov: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Demo mode helper
+# Demo / provider mode helpers
 # ---------------------------------------------------------------------------
 
 def _demo_mode() -> bool:
     return os.environ.get("DEMO_MODE", "false").lower() == "true"
+
+
+def _dental_provider() -> str:
+    """Return the configured dental provider: zuub | dentalxchange | stedi (default)."""
+    return os.environ.get("DENTAL_PROVIDER", "stedi").lower()
 
 
 # ---------------------------------------------------------------------------
@@ -99,9 +111,34 @@ PAYER_ID_MAP: dict[str, str] = {
     "delta_dental":             "DLTDL",
     "metlife_dental":           "METLF",
     "vsp":                      "VSPVS",
+    "cigna_dental":             "62308",
+    "aetna_dental":             "60054",
+    "guardian":                 "GUARD",
+    "united_concordia":         "UNCRD",
+    "humana_dental":            "61101",
+    "principal_dental":         "PRNCP",
+    "sunlife_dental":           "SUNLF",
+    "ameritas":                 "AMRTS",
+    "dentemax":                 "DNTMX",
 }
 
-DENTAL_PAYERS = {"delta_dental", "metlife_dental", "vsp", "delta dental", "metlife dental"}
+# Payer directory — static data for top payers (phone, claim address, payer ID)
+PAYER_DIRECTORY: dict[str, dict] = {
+    "delta_dental":     {"payer_id": "DLTDL", "payer_phone": "1-800-932-0783", "claim_address": "Delta Dental, P.O. Box 9085, Farmington Hills, MI 48333"},
+    "metlife_dental":   {"payer_id": "METLF", "payer_phone": "1-800-942-0854", "claim_address": "MetLife Dental, P.O. Box 981282, El Paso, TX 79998"},
+    "cigna_dental":     {"payer_id": "62308", "payer_phone": "1-800-244-6224", "claim_address": "Cigna Dental, P.O. Box 188037, Chattanooga, TN 37422"},
+    "aetna_dental":     {"payer_id": "60054", "payer_phone": "1-877-238-6200", "claim_address": "Aetna Dental, P.O. Box 14094, Lexington, KY 40512"},
+    "guardian":         {"payer_id": "GUARD", "payer_phone": "1-800-541-7846", "claim_address": "Guardian Dental, P.O. Box 981543, El Paso, TX 79998"},
+    "united_concordia": {"payer_id": "UNCRD", "payer_phone": "1-800-332-0366", "claim_address": "United Concordia, P.O. Box 69420, Harrisburg, PA 17106"},
+    "humana_dental":    {"payer_id": "61101", "payer_phone": "1-800-233-4013", "claim_address": "Humana Dental, P.O. Box 14601, Lexington, KY 40512"},
+    "vsp":              {"payer_id": "VSPVS", "payer_phone": "1-800-877-7195", "claim_address": "VSP, P.O. Box 997105, Sacramento, CA 95899"},
+}
+
+DENTAL_PAYERS = {
+    "delta_dental", "metlife_dental", "vsp", "cigna_dental", "aetna_dental",
+    "guardian", "united_concordia", "humana_dental", "principal_dental",
+    "delta dental", "metlife dental", "cigna dental", "aetna dental",
+}
 
 
 def _lookup_payer_id(payer_name: str) -> str:
@@ -125,8 +162,14 @@ def _is_dental_payer(payer_name: str) -> bool:
     return any(kw in name for kw in dental_keywords)
 
 
+def _payer_directory_lookup(payer_name: str) -> dict:
+    """Return static payer directory data (phone, claim address, payer ID)."""
+    key = payer_name.strip().lower().replace(" ", "_").replace("-", "_")
+    return PAYER_DIRECTORY.get(key, {})
+
+
 # ---------------------------------------------------------------------------
-# Demo data
+# Demo data — Medical
 # ---------------------------------------------------------------------------
 
 def _demo_medical(patient: dict) -> dict:
@@ -149,128 +192,479 @@ def _demo_medical(patient: dict) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Demo data — Dental (v2.3 — full DB Breakdown field set)
+# ---------------------------------------------------------------------------
+
 def _demo_dental(patient: dict) -> dict:
-    """Return realistic payer-specific demo dental eligibility data."""
+    """
+    Return realistic payer-specific demo dental eligibility data.
+    v2.3: includes all DB Breakdown fields — frequency limits, perio/endo/OS %,
+    missing tooth clause, implants, replacement clauses, ortho completion,
+    specific codes, payer directory data.
+    """
     payer_raw = patient.get("payer_name", "Delta Dental PPO")
     payer_key = payer_raw.strip().lower()
 
-    # Payer-specific demo profiles
+    # ── Payer-specific profiles ──────────────────────────────────────────────
+
     if "metlife" in payer_key:
         profile = {
-            "plan_name":                "MetLife Dental PDP Plus",
-            "annual_maximum":           1500.00,
-            "annual_maximum_used":      200.00,
-            "annual_maximum_remaining": 1300.00,
-            "deductible":               75.00,
-            "deductible_met":           0.00,
-            "preventive_coverage":      1.00,
-            "basic_coverage":           0.80,
-            "major_coverage":           0.50,
-            "ortho_coverage":           0.50,
-            "ortho_lifetime_max":       1000.00,
-            "waiting_period_basic":     "None",
-            "waiting_period_major":     "12 months",
-            "network":                  "PDP Plus In-Network",
+            # Plan basics
+            "plan_name":                    "MetLife Dental PDP Plus",
+            "network":                      "PDP Plus In-Network",
+            "benefit_period":               "calendar",
+            "payer_id":                     "METLF",
+            "payer_phone":                  "1-800-942-0854",
+            "claim_address":                "MetLife Dental, P.O. Box 981282, El Paso, TX 79998",
+            # Maximums & deductibles
+            "annual_maximum":               1500.00,
+            "annual_maximum_used":          200.00,
+            "annual_maximum_remaining":     1300.00,
+            "deductible":                   75.00,
+            "deductible_met":               0.00,
+            "deductible_family":            225.00,
+            "deductible_applies_preventive": False,
+            "preventive_in_max":            False,
+            # Coverage percentages
+            "preventive_coverage":          1.00,
+            "basic_coverage":               0.80,
+            "major_coverage":               0.50,
+            "perio_coverage":               0.80,
+            "endo_coverage":                0.80,
+            "oral_surgery_coverage":        0.80,
+            "fillings_coverage":            0.80,
+            "crowns_coverage":              0.50,
+            "dentures_coverage":            0.50,
+            # Waiting periods
+            "waiting_period_basic":         "None",
+            "waiting_period_major":         "12 months",
+            # Frequency limits
+            "prophy_frequency":             "2x per calendar year",
+            "periodic_exam_frequency":      "2x per calendar year",
+            "comp_exam_frequency":          "1x per 3 years",
+            "fmx_frequency":                "1x per 5 years",
+            "bitewing_frequency":           "1x per calendar year",
+            "pa_frequency":                 "As needed",
+            "fluoride_covered":             True,
+            "fluoride_age_limit":           19,
+            "sealants_covered":             True,
+            "sealants_age_limit":           14,
+            # Clauses
+            "missing_tooth_clause":         True,
+            "fillings_downgrade":           True,
+            "crowns_paid_on":               "seat",
+            "same_day_treatment":           False,
+            # Replacement clauses
+            "replacement_crowns":           "5 years",
+            "replacement_bridges":          "5 years",
+            "replacement_dentures":         "5 years",
+            "replacement_partials":         "5 years",
+            "claims_filing_deadline":       "12 months from date of service",
+            # Implants
+            "implants_covered":             True,
+            "implants_coverage":            0.50,
+            "implants_separate_max":        None,
+            "abutment_coverage":            0.50,
+            "implant_crown_coverage":       0.50,
+            # Ortho
+            "ortho_coverage":               0.50,
+            "ortho_lifetime_max":           1000.00,
+            "ortho_lifetime_used":          0.00,
+            "ortho_deductible":             0.00,
+            "ortho_age_limit":              19,
+            "ortho_payment_method":         "lump sum",
+            # Perio specifics
+            "perio_maintenance_frequency":  "3-4x per year (shares with D1110)",
+            "perio_shares_prophy_frequency": True,
+            "srp_frequency":                "1x per 2 years per quadrant",
+            "srp_quads_per_visit":          2,
+            "fmd_frequency":                "1x per lifetime",
+            "perio_same_day_exam":          False,
+            "arestin_covered":              False,
+            # Specific codes
+            "specific_codes": {
+                "D9310": {"covered": True,  "category": "basic",       "note": "Consultation"},
+                "D9944": {"covered": False, "category": "excluded",    "note": "Night guard — not covered"},
+                "D2950": {"covered": True,  "category": "major",       "note": "Core build-up"},
+                "D7953": {"covered": True,  "category": "major",       "note": "Bone graft"},
+                "D9239": {"covered": False, "category": "excluded",    "note": "IV sedation — not covered"},
+                "D9243": {"covered": False, "category": "excluded",    "note": "Deep sedation — not covered"},
+                "D0431": {"covered": False, "category": "excluded",    "note": "Oral cancer screening — not covered"},
+                "D4381": {"covered": False, "category": "excluded",    "note": "Arestin — not covered"},
+                "D1354": {"covered": False, "category": "excluded",    "note": "SDF — not covered"},
+            },
+            "cob_type":                     "standard",
         }
+
     elif "vsp" in payer_key or "vision" in payer_key:
         profile = {
-            "plan_name":                "VSP Choice Plan",
-            "annual_maximum":           None,
-            "annual_maximum_used":      None,
-            "annual_maximum_remaining": None,
-            "deductible":               0.00,
-            "deductible_met":           0.00,
-            "preventive_coverage":      1.00,
-            "basic_coverage":           None,
-            "major_coverage":           None,
-            "ortho_coverage":           None,
-            "ortho_lifetime_max":       None,
-            "waiting_period_basic":     "N/A",
-            "waiting_period_major":     "N/A",
-            "network":                  "VSP Choice Network",
-            "_note_vision":             "VSP is a vision plan. Dental benefits not applicable.",
+            "plan_name":                    "VSP Choice Plan",
+            "network":                      "VSP Choice Network",
+            "benefit_period":               "calendar",
+            "payer_id":                     "VSPVS",
+            "payer_phone":                  "1-800-877-7195",
+            "claim_address":                "VSP, P.O. Box 997105, Sacramento, CA 95899",
+            "annual_maximum":               None,
+            "annual_maximum_used":          None,
+            "annual_maximum_remaining":     None,
+            "deductible":                   0.00,
+            "deductible_met":               0.00,
+            "deductible_family":            None,
+            "deductible_applies_preventive": False,
+            "preventive_in_max":            False,
+            "preventive_coverage":          1.00,
+            "basic_coverage":               None,
+            "major_coverage":               None,
+            "perio_coverage":               None,
+            "endo_coverage":                None,
+            "oral_surgery_coverage":        None,
+            "fillings_coverage":            None,
+            "crowns_coverage":              None,
+            "dentures_coverage":            None,
+            "waiting_period_basic":         "N/A",
+            "waiting_period_major":         "N/A",
+            "prophy_frequency":             "N/A",
+            "periodic_exam_frequency":      "1x per calendar year",
+            "fmx_frequency":                "N/A",
+            "bitewing_frequency":           "N/A",
+            "missing_tooth_clause":         None,
+            "fillings_downgrade":           None,
+            "implants_covered":             False,
+            "ortho_coverage":               None,
+            "ortho_lifetime_max":           None,
+            "ortho_lifetime_used":          None,
+            "ortho_age_limit":              None,
+            "specific_codes":               {},
+            "cob_type":                     "standard",
+            "_note_vision":                 "VSP is a vision plan. Dental benefits not applicable.",
         }
+
     elif "cigna" in payer_key and "dental" in payer_key:
         profile = {
-            "plan_name":                "Cigna Dental 1000",
-            "annual_maximum":           1000.00,
-            "annual_maximum_used":      450.00,
-            "annual_maximum_remaining": 550.00,
-            "deductible":               50.00,
-            "deductible_met":           50.00,
-            "preventive_coverage":      1.00,
-            "basic_coverage":           0.80,
-            "major_coverage":           0.50,
-            "ortho_coverage":           0.00,
-            "ortho_lifetime_max":       0.00,
-            "waiting_period_basic":     "6 months",
-            "waiting_period_major":     "12 months",
-            "network":                  "DPPO In-Network",
+            "plan_name":                    "Cigna Dental 1000",
+            "network":                      "DPPO In-Network",
+            "benefit_period":               "calendar",
+            "payer_id":                     "62308",
+            "payer_phone":                  "1-800-244-6224",
+            "claim_address":                "Cigna Dental, P.O. Box 188037, Chattanooga, TN 37422",
+            "annual_maximum":               1000.00,
+            "annual_maximum_used":          450.00,
+            "annual_maximum_remaining":     550.00,
+            "deductible":                   50.00,
+            "deductible_met":               50.00,
+            "deductible_family":            150.00,
+            "deductible_applies_preventive": False,
+            "preventive_in_max":            False,
+            "preventive_coverage":          1.00,
+            "basic_coverage":               0.80,
+            "major_coverage":               0.50,
+            "perio_coverage":               0.80,
+            "endo_coverage":                0.80,
+            "oral_surgery_coverage":        0.80,
+            "fillings_coverage":            0.80,
+            "crowns_coverage":              0.50,
+            "dentures_coverage":            0.50,
+            "waiting_period_basic":         "6 months",
+            "waiting_period_major":         "12 months",
+            "prophy_frequency":             "2x per calendar year",
+            "periodic_exam_frequency":      "2x per calendar year",
+            "comp_exam_frequency":          "1x per 3 years",
+            "fmx_frequency":                "1x per 5 years",
+            "bitewing_frequency":           "1x per calendar year",
+            "pa_frequency":                 "As needed",
+            "fluoride_covered":             True,
+            "fluoride_age_limit":           18,
+            "sealants_covered":             True,
+            "sealants_age_limit":           13,
+            "missing_tooth_clause":         True,
+            "fillings_downgrade":           True,
+            "crowns_paid_on":               "seat",
+            "same_day_treatment":           False,
+            "replacement_crowns":           "5 years",
+            "replacement_bridges":          "5 years",
+            "replacement_dentures":         "5 years",
+            "replacement_partials":         "5 years",
+            "claims_filing_deadline":       "12 months from date of service",
+            "implants_covered":             False,
+            "implants_coverage":            None,
+            "implants_separate_max":        None,
+            "abutment_coverage":            None,
+            "implant_crown_coverage":       None,
+            "ortho_coverage":               0.00,
+            "ortho_lifetime_max":           0.00,
+            "ortho_lifetime_used":          0.00,
+            "ortho_deductible":             0.00,
+            "ortho_age_limit":              None,
+            "ortho_payment_method":         None,
+            "perio_maintenance_frequency":  "3-4x per year (shares with D1110)",
+            "perio_shares_prophy_frequency": True,
+            "srp_frequency":                "1x per 2 years per quadrant",
+            "srp_quads_per_visit":          2,
+            "fmd_frequency":                "1x per lifetime",
+            "perio_same_day_exam":          False,
+            "arestin_covered":              False,
+            "specific_codes": {
+                "D9310": {"covered": True,  "category": "basic",    "note": "Consultation"},
+                "D9944": {"covered": False, "category": "excluded", "note": "Night guard — not covered"},
+                "D2950": {"covered": True,  "category": "major",   "note": "Core build-up"},
+                "D7953": {"covered": False, "category": "excluded", "note": "Bone graft — not covered"},
+                "D9239": {"covered": False, "category": "excluded", "note": "IV sedation — not covered"},
+                "D9243": {"covered": False, "category": "excluded", "note": "Deep sedation — not covered"},
+                "D0431": {"covered": False, "category": "excluded", "note": "Oral cancer screening — not covered"},
+                "D4381": {"covered": False, "category": "excluded", "note": "Arestin — not covered"},
+                "D1354": {"covered": False, "category": "excluded", "note": "SDF — not covered"},
+            },
+            "cob_type":                     "standard",
         }
+
     elif "guardian" in payer_key:
         profile = {
-            "plan_name":                "Guardian DentalGuard Preferred",
-            "annual_maximum":           2500.00,
-            "annual_maximum_used":      0.00,
-            "annual_maximum_remaining": 2500.00,
-            "deductible":               50.00,
-            "deductible_met":           0.00,
-            "preventive_coverage":      1.00,
-            "basic_coverage":           0.80,
-            "major_coverage":           0.60,
-            "ortho_coverage":           0.50,
-            "ortho_lifetime_max":       2000.00,
-            "waiting_period_basic":     "None",
-            "waiting_period_major":     "6 months",
-            "network":                  "DentalGuard Preferred",
+            "plan_name":                    "Guardian DentalGuard Preferred",
+            "network":                      "DentalGuard Preferred",
+            "benefit_period":               "calendar",
+            "payer_id":                     "GUARD",
+            "payer_phone":                  "1-800-541-7846",
+            "claim_address":                "Guardian Dental, P.O. Box 981543, El Paso, TX 79998",
+            "annual_maximum":               2500.00,
+            "annual_maximum_used":          0.00,
+            "annual_maximum_remaining":     2500.00,
+            "deductible":                   50.00,
+            "deductible_met":               0.00,
+            "deductible_family":            150.00,
+            "deductible_applies_preventive": False,
+            "preventive_in_max":            False,
+            "preventive_coverage":          1.00,
+            "basic_coverage":               0.80,
+            "major_coverage":               0.60,
+            "perio_coverage":               0.80,
+            "endo_coverage":                0.80,
+            "oral_surgery_coverage":        0.80,
+            "fillings_coverage":            0.80,
+            "crowns_coverage":              0.60,
+            "dentures_coverage":            0.60,
+            "waiting_period_basic":         "None",
+            "waiting_period_major":         "6 months",
+            "prophy_frequency":             "2x per calendar year",
+            "periodic_exam_frequency":      "2x per calendar year",
+            "comp_exam_frequency":          "1x per 3 years",
+            "fmx_frequency":                "1x per 3 years",
+            "bitewing_frequency":           "2x per calendar year",
+            "pa_frequency":                 "As needed",
+            "fluoride_covered":             True,
+            "fluoride_age_limit":           19,
+            "sealants_covered":             True,
+            "sealants_age_limit":           16,
+            "missing_tooth_clause":         False,
+            "fillings_downgrade":           False,
+            "crowns_paid_on":               "seat",
+            "same_day_treatment":           True,
+            "replacement_crowns":           "5 years",
+            "replacement_bridges":          "5 years",
+            "replacement_dentures":         "5 years",
+            "replacement_partials":         "5 years",
+            "claims_filing_deadline":       "12 months from date of service",
+            "implants_covered":             True,
+            "implants_coverage":            0.50,
+            "implants_separate_max":        None,
+            "abutment_coverage":            0.50,
+            "implant_crown_coverage":       0.50,
+            "ortho_coverage":               0.50,
+            "ortho_lifetime_max":           2000.00,
+            "ortho_lifetime_used":          0.00,
+            "ortho_deductible":             0.00,
+            "ortho_age_limit":              19,
+            "ortho_payment_method":         "lump sum",
+            "perio_maintenance_frequency":  "3-4x per year (shares with D1110)",
+            "perio_shares_prophy_frequency": True,
+            "srp_frequency":                "1x per 2 years per quadrant",
+            "srp_quads_per_visit":          4,
+            "fmd_frequency":                "1x per lifetime",
+            "perio_same_day_exam":          True,
+            "arestin_covered":              True,
+            "specific_codes": {
+                "D9310": {"covered": True,  "category": "basic",   "note": "Consultation"},
+                "D9944": {"covered": True,  "category": "major",   "note": "Night guard — covered"},
+                "D2950": {"covered": True,  "category": "major",   "note": "Core build-up"},
+                "D7953": {"covered": True,  "category": "major",   "note": "Bone graft"},
+                "D9239": {"covered": True,  "category": "basic",   "note": "IV sedation — covered"},
+                "D9243": {"covered": True,  "category": "basic",   "note": "Deep sedation — covered"},
+                "D0431": {"covered": True,  "category": "preventive", "note": "Oral cancer screening"},
+                "D4381": {"covered": True,  "category": "basic",   "note": "Arestin — covered"},
+                "D1354": {"covered": False, "category": "excluded", "note": "SDF — not covered"},
+            },
+            "cob_type":                     "standard",
         }
+
     elif "aetna" in payer_key and "dental" in payer_key:
         profile = {
-            "plan_name":                "Aetna Dental PPO",
-            "annual_maximum":           1500.00,
-            "annual_maximum_used":      125.00,
-            "annual_maximum_remaining": 1375.00,
-            "deductible":               50.00,
-            "deductible_met":           25.00,
-            "preventive_coverage":      1.00,
-            "basic_coverage":           0.80,
-            "major_coverage":           0.50,
-            "ortho_coverage":           0.50,
-            "ortho_lifetime_max":       1500.00,
-            "waiting_period_basic":     "None",
-            "waiting_period_major":     "12 months",
-            "network":                  "Aetna Dental PPO",
+            "plan_name":                    "Aetna Dental PPO",
+            "network":                      "Aetna Dental PPO",
+            "benefit_period":               "calendar",
+            "payer_id":                     "60054",
+            "payer_phone":                  "1-877-238-6200",
+            "claim_address":                "Aetna Dental, P.O. Box 14094, Lexington, KY 40512",
+            "annual_maximum":               1500.00,
+            "annual_maximum_used":          125.00,
+            "annual_maximum_remaining":     1375.00,
+            "deductible":                   50.00,
+            "deductible_met":               25.00,
+            "deductible_family":            150.00,
+            "deductible_applies_preventive": False,
+            "preventive_in_max":            False,
+            "preventive_coverage":          1.00,
+            "basic_coverage":               0.80,
+            "major_coverage":               0.50,
+            "perio_coverage":               0.80,
+            "endo_coverage":                0.80,
+            "oral_surgery_coverage":        0.80,
+            "fillings_coverage":            0.80,
+            "crowns_coverage":              0.50,
+            "dentures_coverage":            0.50,
+            "waiting_period_basic":         "None",
+            "waiting_period_major":         "12 months",
+            "prophy_frequency":             "2x per calendar year",
+            "periodic_exam_frequency":      "2x per calendar year",
+            "comp_exam_frequency":          "1x per 3 years",
+            "fmx_frequency":                "1x per 5 years",
+            "bitewing_frequency":           "1x per calendar year",
+            "pa_frequency":                 "As needed",
+            "fluoride_covered":             True,
+            "fluoride_age_limit":           18,
+            "sealants_covered":             True,
+            "sealants_age_limit":           14,
+            "missing_tooth_clause":         True,
+            "fillings_downgrade":           True,
+            "crowns_paid_on":               "seat",
+            "same_day_treatment":           False,
+            "replacement_crowns":           "5 years",
+            "replacement_bridges":          "5 years",
+            "replacement_dentures":         "5 years",
+            "replacement_partials":         "5 years",
+            "claims_filing_deadline":       "12 months from date of service",
+            "implants_covered":             True,
+            "implants_coverage":            0.50,
+            "implants_separate_max":        None,
+            "abutment_coverage":            0.50,
+            "implant_crown_coverage":       0.50,
+            "ortho_coverage":               0.50,
+            "ortho_lifetime_max":           1500.00,
+            "ortho_lifetime_used":          0.00,
+            "ortho_deductible":             0.00,
+            "ortho_age_limit":              19,
+            "ortho_payment_method":         "lump sum",
+            "perio_maintenance_frequency":  "3-4x per year (shares with D1110)",
+            "perio_shares_prophy_frequency": True,
+            "srp_frequency":                "1x per 2 years per quadrant",
+            "srp_quads_per_visit":          2,
+            "fmd_frequency":                "1x per lifetime",
+            "perio_same_day_exam":          False,
+            "arestin_covered":              False,
+            "specific_codes": {
+                "D9310": {"covered": True,  "category": "basic",    "note": "Consultation"},
+                "D9944": {"covered": False, "category": "excluded", "note": "Night guard — not covered"},
+                "D2950": {"covered": True,  "category": "major",   "note": "Core build-up"},
+                "D7953": {"covered": True,  "category": "major",   "note": "Bone graft"},
+                "D9239": {"covered": False, "category": "excluded", "note": "IV sedation — not covered"},
+                "D9243": {"covered": False, "category": "excluded", "note": "Deep sedation — not covered"},
+                "D0431": {"covered": False, "category": "excluded", "note": "Oral cancer screening — not covered"},
+                "D4381": {"covered": False, "category": "excluded", "note": "Arestin — not covered"},
+                "D1354": {"covered": False, "category": "excluded", "note": "SDF — not covered"},
+            },
+            "cob_type":                     "standard",
         }
+
     else:
         # Default: Delta Dental PPO
         profile = {
-            "plan_name":                payer_raw if payer_raw else "Delta Dental PPO",
-            "annual_maximum":           2000.00,
-            "annual_maximum_used":      350.00,
-            "annual_maximum_remaining": 1650.00,
-            "deductible":               50.00,
-            "deductible_met":           50.00,
-            "preventive_coverage":      1.00,
-            "basic_coverage":           0.80,
-            "major_coverage":           0.50,
-            "ortho_coverage":           0.50,
-            "ortho_lifetime_max":       1500.00,
-            "waiting_period_basic":     "None",
-            "waiting_period_major":     "12 months",
-            "network":                  "PPO In-Network",
+            "plan_name":                    payer_raw if payer_raw else "Delta Dental PPO",
+            "network":                      "PPO In-Network",
+            "benefit_period":               "calendar",
+            "payer_id":                     "DLTDL",
+            "payer_phone":                  "1-800-932-0783",
+            "claim_address":                "Delta Dental, P.O. Box 9085, Farmington Hills, MI 48333",
+            "annual_maximum":               2000.00,
+            "annual_maximum_used":          350.00,
+            "annual_maximum_remaining":     1650.00,
+            "deductible":                   50.00,
+            "deductible_met":               50.00,
+            "deductible_family":            150.00,
+            "deductible_applies_preventive": False,
+            "preventive_in_max":            False,
+            "preventive_coverage":          1.00,
+            "basic_coverage":               0.80,
+            "major_coverage":               0.50,
+            "perio_coverage":               0.80,
+            "endo_coverage":                0.80,
+            "oral_surgery_coverage":        0.80,
+            "fillings_coverage":            0.80,
+            "crowns_coverage":              0.50,
+            "dentures_coverage":            0.50,
+            "waiting_period_basic":         "None",
+            "waiting_period_major":         "12 months",
+            "prophy_frequency":             "2x per calendar year",
+            "periodic_exam_frequency":      "2x per calendar year",
+            "comp_exam_frequency":          "1x per 3 years",
+            "fmx_frequency":                "1x per 3 years",
+            "bitewing_frequency":           "2x per calendar year",
+            "pa_frequency":                 "As needed",
+            "fluoride_covered":             True,
+            "fluoride_age_limit":           19,
+            "sealants_covered":             True,
+            "sealants_age_limit":           14,
+            "missing_tooth_clause":         False,
+            "fillings_downgrade":           False,
+            "crowns_paid_on":               "seat",
+            "same_day_treatment":           True,
+            "replacement_crowns":           "5 years",
+            "replacement_bridges":          "5 years",
+            "replacement_dentures":         "5 years",
+            "replacement_partials":         "5 years",
+            "claims_filing_deadline":       "12 months from date of service",
+            "implants_covered":             True,
+            "implants_coverage":            0.50,
+            "implants_separate_max":        None,
+            "abutment_coverage":            0.50,
+            "implant_crown_coverage":       0.50,
+            "ortho_coverage":               0.50,
+            "ortho_lifetime_max":           1500.00,
+            "ortho_lifetime_used":          0.00,
+            "ortho_deductible":             0.00,
+            "ortho_age_limit":              19,
+            "ortho_payment_method":         "lump sum",
+            "perio_maintenance_frequency":  "3-4x per year (shares with D1110)",
+            "perio_shares_prophy_frequency": True,
+            "srp_frequency":                "1x per 2 years per quadrant",
+            "srp_quads_per_visit":          2,
+            "fmd_frequency":                "1x per lifetime",
+            "perio_same_day_exam":          True,
+            "arestin_covered":              False,
+            "specific_codes": {
+                "D9310": {"covered": True,  "category": "basic",    "note": "Consultation"},
+                "D9944": {"covered": False, "category": "excluded", "note": "Night guard — not covered"},
+                "D2950": {"covered": True,  "category": "major",   "note": "Core build-up"},
+                "D7953": {"covered": True,  "category": "major",   "note": "Bone graft"},
+                "D9239": {"covered": False, "category": "excluded", "note": "IV sedation — not covered"},
+                "D9243": {"covered": False, "category": "excluded", "note": "Deep sedation — not covered"},
+                "D0431": {"covered": True,  "category": "preventive", "note": "Oral cancer screening"},
+                "D4381": {"covered": False, "category": "excluded", "note": "Arestin — not covered"},
+                "D1354": {"covered": False, "category": "excluded", "note": "SDF — not covered"},
+            },
+            "cob_type":                     "standard",
         }
 
     return {
-        "active":       True,
-        "plan_begin_date": "2026-01-01",
-        "plan_type":    "dental",
+        "active":           True,
+        "plan_begin_date":  "2026-01-01",
+        "plan_type":        "dental",
         **profile,
-        "group_number": patient.get("group_number", "GRP-00123"),
-        "member_id":    patient.get("member_id", "DD-987654"),
-        "active_medical": False,
-        "active_dental":  True,
-        "_demo":        True,
-        "_note":        "Demo mode — not real eligibility data.",
+        "group_number":     patient.get("group_number", "GRP-00123"),
+        "member_id":        patient.get("member_id", "DD-987654"),
+        "active_medical":   False,
+        "active_dental":    True,
+        "data_source":      "demo",
+        "_demo":            True,
+        "_note":            "Demo mode — not real eligibility data.",
     }
 
 
@@ -499,31 +893,65 @@ def discoverCoverage(patient: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Dental eligibility
+# Dental eligibility — routes to Zuub / DentalXChange / Stedi / Demo
 # ---------------------------------------------------------------------------
 
 def checkDentalEligibility(patient: dict) -> dict:
     """
     Dental eligibility check.
-    In DEMO_MODE returns realistic sandbox benefit data.
-    In production: stub — wire a real dental clearinghouse for live data.
+    DEMO_MODE=true  → returns full DB Breakdown demo data (no live API needed)
+    DENTAL_PROVIDER=zuub         → calls Zuub API
+    DENTAL_PROVIDER=dentalxchange → calls DentalXChange XConnect API
+    DENTAL_PROVIDER=stedi (default) → calls Stedi with dental STCs
     """
-    logger.info("checkDentalEligibility patient=%s", mask_phi(patient))
+    logger.info("checkDentalEligibility patient=%s provider=%s",
+                mask_phi(patient), _dental_provider())
 
     if _demo_mode():
         return _demo_dental(patient)
 
-    # Production stub — no fabricated dollar amounts
+    provider = _dental_provider()
+
+    if provider == "zuub":
+        try:
+            from zuub_engine import check_dental_eligibility_zuub
+            return check_dental_eligibility_zuub(patient)
+        except ImportError:
+            logger.error("zuub_engine.py not found — falling back to stub")
+        except Exception as exc:
+            logger.error("Zuub API error: %s — falling back to stub", exc)
+
+    elif provider == "dentalxchange":
+        try:
+            from dentalxchange_engine import check_dental_eligibility_dxc
+            return check_dental_eligibility_dxc(patient)
+        except ImportError:
+            logger.error("dentalxchange_engine.py not found — falling back to stub")
+        except Exception as exc:
+            logger.error("DentalXChange API error: %s — falling back to stub", exc)
+
+    # Stedi fallback (or default)
+    try:
+        result = callEligibility(patient)
+        result["active_dental"]  = result.get("active", False)
+        result["active_medical"] = False
+        result["data_source"]    = "stedi"
+        return result
+    except Exception as exc:
+        logger.warning("Stedi dental fallback error: %s", exc)
+
+    # Final stub
     return {
-        "active":    True,
-        "plan_name": patient.get("payer_name", "Dental Plan"),
-        "plan_type": "dental",
+        "active":         True,
+        "plan_name":      patient.get("payer_name", "Dental Plan"),
+        "plan_type":      "dental",
         "active_medical": False,
         "active_dental":  True,
-        "_stub":     True,
-        "_note":     (
-            "Dental eligibility requires a dental clearinghouse integration "
-            "(e.g. Vyne Dental / Availity). Contact support to enable live dental benefits."
+        "data_source":    "stub",
+        "_stub":          True,
+        "_note": (
+            "Dental eligibility requires a dental clearinghouse integration. "
+            "Set DENTAL_PROVIDER=zuub and ZUUB_API_KEY to enable live dental benefits."
         ),
     }
 
@@ -546,7 +974,7 @@ def resolve_patient(patient: dict, coverages: list = None) -> dict:
         coverages = []
 
     # Determine plan type from coverages list or patient dict
-    plan_type = patient.get("plan_type", "")
+    plan_type  = patient.get("plan_type", "")
     payer_name = patient.get("payer_name", "")
 
     # Check if any coverage is dental, or if the payer name is dental
@@ -558,7 +986,6 @@ def resolve_patient(patient: dict, coverages: list = None) -> dict:
 
     if is_dental:
         # Inject payer_name + member_id from the first dental coverage into patient dict
-        # so _demo_dental() can use them for payer-specific profiles.
         dental_coverage = next(
             (c for c in coverages if c.get("plan_type") == "dental"),
             coverages[0] if coverages else {}
