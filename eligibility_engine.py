@@ -150,38 +150,127 @@ def _demo_medical(patient: dict) -> dict:
 
 
 def _demo_dental(patient: dict) -> dict:
-    """Return realistic demo dental eligibility data."""
-    payer = patient.get("payer_name", "Delta Dental PPO")
+    """Return realistic payer-specific demo dental eligibility data."""
+    payer_raw = patient.get("payer_name", "Delta Dental PPO")
+    payer_key = payer_raw.strip().lower()
+
+    # Payer-specific demo profiles
+    if "metlife" in payer_key:
+        profile = {
+            "plan_name":                "MetLife Dental PDP Plus",
+            "annual_maximum":           1500.00,
+            "annual_maximum_used":      200.00,
+            "annual_maximum_remaining": 1300.00,
+            "deductible":               75.00,
+            "deductible_met":           0.00,
+            "preventive_coverage":      1.00,
+            "basic_coverage":           0.80,
+            "major_coverage":           0.50,
+            "ortho_coverage":           0.50,
+            "ortho_lifetime_max":       1000.00,
+            "waiting_period_basic":     "None",
+            "waiting_period_major":     "12 months",
+            "network":                  "PDP Plus In-Network",
+        }
+    elif "vsp" in payer_key or "vision" in payer_key:
+        profile = {
+            "plan_name":                "VSP Choice Plan",
+            "annual_maximum":           None,
+            "annual_maximum_used":      None,
+            "annual_maximum_remaining": None,
+            "deductible":               0.00,
+            "deductible_met":           0.00,
+            "preventive_coverage":      1.00,
+            "basic_coverage":           None,
+            "major_coverage":           None,
+            "ortho_coverage":           None,
+            "ortho_lifetime_max":       None,
+            "waiting_period_basic":     "N/A",
+            "waiting_period_major":     "N/A",
+            "network":                  "VSP Choice Network",
+            "_note_vision":             "VSP is a vision plan. Dental benefits not applicable.",
+        }
+    elif "cigna" in payer_key and "dental" in payer_key:
+        profile = {
+            "plan_name":                "Cigna Dental 1000",
+            "annual_maximum":           1000.00,
+            "annual_maximum_used":      450.00,
+            "annual_maximum_remaining": 550.00,
+            "deductible":               50.00,
+            "deductible_met":           50.00,
+            "preventive_coverage":      1.00,
+            "basic_coverage":           0.80,
+            "major_coverage":           0.50,
+            "ortho_coverage":           0.00,
+            "ortho_lifetime_max":       0.00,
+            "waiting_period_basic":     "6 months",
+            "waiting_period_major":     "12 months",
+            "network":                  "DPPO In-Network",
+        }
+    elif "guardian" in payer_key:
+        profile = {
+            "plan_name":                "Guardian DentalGuard Preferred",
+            "annual_maximum":           2500.00,
+            "annual_maximum_used":      0.00,
+            "annual_maximum_remaining": 2500.00,
+            "deductible":               50.00,
+            "deductible_met":           0.00,
+            "preventive_coverage":      1.00,
+            "basic_coverage":           0.80,
+            "major_coverage":           0.60,
+            "ortho_coverage":           0.50,
+            "ortho_lifetime_max":       2000.00,
+            "waiting_period_basic":     "None",
+            "waiting_period_major":     "6 months",
+            "network":                  "DentalGuard Preferred",
+        }
+    elif "aetna" in payer_key and "dental" in payer_key:
+        profile = {
+            "plan_name":                "Aetna Dental PPO",
+            "annual_maximum":           1500.00,
+            "annual_maximum_used":      125.00,
+            "annual_maximum_remaining": 1375.00,
+            "deductible":               50.00,
+            "deductible_met":           25.00,
+            "preventive_coverage":      1.00,
+            "basic_coverage":           0.80,
+            "major_coverage":           0.50,
+            "ortho_coverage":           0.50,
+            "ortho_lifetime_max":       1500.00,
+            "waiting_period_basic":     "None",
+            "waiting_period_major":     "12 months",
+            "network":                  "Aetna Dental PPO",
+        }
+    else:
+        # Default: Delta Dental PPO
+        profile = {
+            "plan_name":                payer_raw if payer_raw else "Delta Dental PPO",
+            "annual_maximum":           2000.00,
+            "annual_maximum_used":      350.00,
+            "annual_maximum_remaining": 1650.00,
+            "deductible":               50.00,
+            "deductible_met":           50.00,
+            "preventive_coverage":      1.00,
+            "basic_coverage":           0.80,
+            "major_coverage":           0.50,
+            "ortho_coverage":           0.50,
+            "ortho_lifetime_max":       1500.00,
+            "waiting_period_basic":     "None",
+            "waiting_period_major":     "12 months",
+            "network":                  "PPO In-Network",
+        }
+
     return {
-        "active":                   True,
-        "plan_name":                payer if payer else "Delta Dental PPO",
-        "plan_begin_date":          "2026-01-01",
-        "plan_type":                "dental",
-        # Annual maximums
-        "annual_maximum":           2000.00,
-        "annual_maximum_used":      350.00,
-        "annual_maximum_remaining": 1650.00,
-        # Deductible
-        "deductible":               50.00,
-        "deductible_met":           50.00,
-        # Benefit percentages
-        "preventive_coverage":      1.00,   # 100%
-        "basic_coverage":           0.80,   # 80%
-        "major_coverage":           0.50,   # 50%
-        "ortho_coverage":           0.50,   # 50%
-        "ortho_lifetime_max":       1500.00,
-        # Waiting periods
-        "waiting_period_basic":     "None",
-        "waiting_period_major":     "12 months",
-        # Network
-        "network":                  "PPO In-Network",
-        "group_number":             patient.get("group_number", "GRP-00123"),
-        "member_id":                patient.get("member_id", "DD-987654"),
-        # Flags
-        "active_medical":           False,
-        "active_dental":            True,
-        "_demo":                    True,
-        "_note":                    "Demo mode — not real eligibility data.",
+        "active":       True,
+        "plan_begin_date": "2026-01-01",
+        "plan_type":    "dental",
+        **profile,
+        "group_number": patient.get("group_number", "GRP-00123"),
+        "member_id":    patient.get("member_id", "DD-987654"),
+        "active_medical": False,
+        "active_dental":  True,
+        "_demo":        True,
+        "_note":        "Demo mode — not real eligibility data.",
     }
 
 
