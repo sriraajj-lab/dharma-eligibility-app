@@ -930,15 +930,28 @@ def checkDentalEligibility(patient: dict) -> dict:
         except Exception as exc:
             logger.error("DentalXChange API error: %s — falling back to stub", exc)
 
-    # Stedi fallback (or default)
+    # Stedi dental (default) — uses STC 35 for dental-specific benefits
     try:
-        result = callEligibility(patient)
+        from stedi_dental_engine import check_dental_eligibility_stedi
+        result = check_dental_eligibility_stedi(patient)
         result["active_dental"]  = result.get("active", False)
         result["active_medical"] = False
         result["data_source"]    = "stedi"
         return result
+    except ImportError:
+        logger.error("stedi_dental_engine.py not found — falling back to generic Stedi")
     except Exception as exc:
-        logger.warning("Stedi dental fallback error: %s", exc)
+        logger.warning("Stedi dental engine error: %s — falling back to generic Stedi", exc)
+
+    # Generic Stedi fallback (medical endpoint, no dental STCs)
+    try:
+        result = callEligibility(patient)
+        result["active_dental"]  = result.get("active", False)
+        result["active_medical"] = False
+        result["data_source"]    = "stedi_generic"
+        return result
+    except Exception as exc:
+        logger.warning("Stedi generic fallback error: %s", exc)
 
     # Final stub
     return {
@@ -951,7 +964,8 @@ def checkDentalEligibility(patient: dict) -> dict:
         "_stub":          True,
         "_note": (
             "Dental eligibility requires a dental clearinghouse integration. "
-            "Set DENTAL_PROVIDER=zuub and ZUUB_API_KEY to enable live dental benefits."
+            "Set DENTAL_PROVIDER=stedi and STEDI_API_KEY to enable live dental benefits. "
+            "Sign up free at https://www.stedi.com/app/signup"
         ),
     }
 
